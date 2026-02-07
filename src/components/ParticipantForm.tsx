@@ -1,19 +1,23 @@
 import { useState } from 'react';
-import type { Participant } from '../types';
+import type { Participant, BookingSettings } from '../types';
 import { format, parseISO } from 'date-fns';
 
 interface ParticipantFormProps {
   participants: Participant[];
+  settings: BookingSettings;
   onAddParticipant: (participant: Omit<Participant, 'id'>) => void;
   onRemoveParticipant: (id: string) => void;
   onUpdateParticipant: (id: string, participant: Omit<Participant, 'id'>) => void;
+  onUpdateSettings: (settings: Partial<BookingSettings>) => void;
 }
 
 export function ParticipantForm({
   participants,
+  settings,
   onAddParticipant,
   onRemoveParticipant,
-  onUpdateParticipant
+  onUpdateParticipant,
+  onUpdateSettings
 }: ParticipantFormProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<string | null>(null);
@@ -176,6 +180,26 @@ export function ParticipantForm({
 
       {participants.length === 0 && (
         <p className="no-participants">No participants added yet. Add your first participant above.</p>
+      )}
+
+      {/* Split costs evenly option */}
+      {participants.length > 0 && (
+        <div className="cost-split-option">
+          <label className="checkbox-item split-evenly-option">
+            <input
+              type="checkbox"
+              checked={settings.splitEvenly}
+              onChange={(e) => onUpdateSettings({ splitEvenly: e.target.checked })}
+            />
+            <span className="checkbox-text">
+              <strong>Split costs evenly among all participants</strong>
+            </span>
+          </label>
+          <p className="split-option-description">
+            When enabled, the total cost is divided equally among all participants regardless of their stay duration. 
+            Day-by-day breakdowns will still show who was present each night, but final amounts will be equal for everyone.
+          </p>
+        </div>
       )}
 
       {/* Date Convention Note */}

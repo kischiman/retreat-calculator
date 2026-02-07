@@ -133,11 +133,18 @@ export function calculateCostSplit(
     
     // Sum up costs for all nights this participant is present
     let totalCostEUR = 0;
-    nightBreakdown.forEach(night => {
-      if (night.presentParticipants.includes(participant.name)) {
-        totalCostEUR += night.perPersonCost;
-      }
-    });
+    
+    if (settings.splitEvenly) {
+      // Split total cost evenly among all participants
+      totalCostEUR = settings.totalCost / participants.length;
+    } else {
+      // Calculate based on nights present (original logic)
+      nightBreakdown.forEach(night => {
+        if (night.presentParticipants.includes(participant.name)) {
+          totalCostEUR += night.perPersonCost;
+        }
+      });
+    }
 
     // Calculate additional charges and credits
     let additionalCharges = 0; // Money owed due to loans/services

@@ -23,7 +23,8 @@ function App() {
     currency: 'EUR',
     exchangeRate: 1.07,
     showUSD: false,
-    roundUSD: false
+    roundUSD: false,
+    splitEvenly: false
   });
   const [additionalActivities, setAdditionalActivities] = useState<AdditionalActivity[]>([]);
   
@@ -276,9 +277,11 @@ function App() {
         {/* Participants */}
         <ParticipantForm
           participants={participants}
+          settings={settings}
           onAddParticipant={addParticipant}
           onRemoveParticipant={removeParticipant}
           onUpdateParticipant={updateParticipant}
+          onUpdateSettings={updateSettings}
         />
 
         {/* Occupancy Overview & Results */}

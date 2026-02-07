@@ -13,6 +13,7 @@ export interface BookingSettings {
   exchangeRate: number; // EUR to USD
   showUSD: boolean;
   roundUSD: boolean;
+  splitEvenly: boolean; // Split total cost evenly among all participants regardless of stay duration
 }
 
 export interface NightBreakdown {

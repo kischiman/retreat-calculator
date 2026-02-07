@@ -17,7 +17,8 @@ const testSettings: BookingSettings = {
   currency: 'EUR',
   exchangeRate: 1.07,
   showUSD: false,
-  roundUSD: false
+  roundUSD: false,
+  splitEvenly: false
 };
 
 // Run test calculation
