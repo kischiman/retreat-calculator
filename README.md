@@ -6,7 +6,7 @@ A comprehensive cost-splitting calculator designed for retreats, group trips, an
 
 - **Dynamic Cost Calculation**: Automatically splits costs based on participant occupancy per night
 - **Participant Management**: Add participants with flexible arrival and departure dates
-- **Additional Modules**: Handle loans, services, and multiple tips between participants
+- **Additional Activities**: Handle loans, services, and multiple tips between participants
 - **Multi-Currency Support**: EUR/USD with real-time conversion
 - **Data Import/Export**: CSV functionality for easy data management
 - **Responsive Design**: Mobile-friendly interface with collapsible sections
@@ -14,7 +14,7 @@ A comprehensive cost-splitting calculator designed for retreats, group trips, an
 ## Tech Stack
 
 - **Frontend**: React 19, TypeScript, Vite
-- **Styling**: CSS Modules with responsive design
+- **Styling**: CSS Activities with responsive design
 - **Charts**: Recharts for data visualization
 - **Deployment**: Static site deployment ready
 
@@ -64,7 +64,7 @@ No environment variables or database setup required.
 
 1. **Setup**: Configure booking dates and total cost
 2. **Add Participants**: Enter names and stay duration
-3. **Additional Modules**: Add loans, services, or tips between participants
+3. **Additional Activities**: Add loans, services, or tips between participants
 4. **Review Results**: View detailed cost breakdown per person
 5. **Export**: Download results as CSV for record-keeping
 

@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import type { Participant, BookingSettings, ValidationError, AdditionalModule } from './types';
+import type { Participant, BookingSettings, ValidationError, AdditionalActivity } from './types';
 import { calculateCostSplit, validateInputs } from './utils/calculations';
 import { BookingSettings as BookingSettingsComponent } from './components/BookingSettings';
 import { ParticipantForm } from './components/ParticipantForm';
 import { ResultsTables } from './components/ResultsTables';
 import { ExportButtons } from './components/ExportButtons';
 import { ValidationMessages } from './components/ValidationMessages';
-import { AdditionalModules } from './components/AdditionalModules';
+import { AdditionalActivities } from './components/AdditionalActivities';
 import { CsvImport } from './components/CsvImport';
 import { OccupancyOverview } from './components/OccupancyOverview';
 import { exampleParticipants, exampleSettings } from './data/exampleData';
@@ -23,7 +23,7 @@ function App() {
     showUSD: false,
     roundUSD: false
   });
-  const [additionalModules, setAdditionalModules] = useState<AdditionalModule[]>([]);
+  const [additionalActivities, setAdditionalActivities] = useState<AdditionalActivity[]>([]);
 
   const addParticipant = (participant: Omit<Participant, 'id'>) => {
     const newParticipant: Participant = {
@@ -56,28 +56,28 @@ function App() {
     updateSettings(exampleSettings);
   };
 
-  const addAdditionalModule = (module: Omit<AdditionalModule, 'id'>) => {
-    const newModule: AdditionalModule = {
-      ...module,
+  const addAdditionalActivity = (activity: Omit<AdditionalActivity, 'id'>) => {
+    const newActivity: AdditionalActivity = {
+      ...activity,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
     };
-    setAdditionalModules(prev => [...prev, newModule]);
+    setAdditionalActivities(prev => [...prev, newActivity]);
   };
 
-  const removeAdditionalModule = (id: string) => {
-    setAdditionalModules(prev => prev.filter(m => m.id !== id));
+  const removeAdditionalActivity = (id: string) => {
+    setAdditionalActivities(prev => prev.filter(m => m.id !== id));
   };
 
-  const updateAdditionalModule = (id: string, module: Omit<AdditionalModule, 'id'>) => {
-    setAdditionalModules(prev =>
-      prev.map(m => (m.id === id ? { ...module, id } : m))
+  const updateAdditionalActivity = (id: string, activity: Omit<AdditionalActivity, 'id'>) => {
+    setAdditionalActivities(prev =>
+      prev.map(m => (m.id === id ? { ...activity, id } : m))
     );
   };
 
   const handleCsvImport = (data: {
     participants: Omit<Participant, 'id'>[];
     settings: Partial<BookingSettings>;
-    additionalModules: Omit<AdditionalModule, 'id' | 'fromParticipantIds' | 'toParticipantIds'>[];
+    additionalActivities: any[]; // Temporary type to handle names
   }) => {
     // Import participants
     const newParticipants = data.participants.map(p => ({
@@ -89,9 +89,47 @@ function App() {
     // Import settings
     updateSettings(data.settings);
 
-    // Import additional modules (CSV import is simplified, so we skip modules for now)
-    // In the future, CSV could include participant mappings to properly import modules
-    setAdditionalModules([]);
+    // Import additional activities with participant name mapping
+    const newActivities = data.additionalActivities.map(activity => {
+      // Map participant names to IDs
+      const fromParticipantIds: string[] = [];
+      const toParticipantIds: string[] = [];
+      
+      if (activity.fromParticipantNames) {
+        activity.fromParticipantNames.forEach((name: string) => {
+          const participant = newParticipants.find(p => p.name.toLowerCase().trim() === name.toLowerCase().trim());
+          if (participant) {
+            fromParticipantIds.push(participant.id);
+          }
+        });
+      }
+      
+      if (activity.toParticipantNames) {
+        activity.toParticipantNames.forEach((name: string) => {
+          const participant = newParticipants.find(p => p.name.toLowerCase().trim() === name.toLowerCase().trim());
+          if (participant) {
+            toParticipantIds.push(participant.id);
+          }
+        });
+      }
+      
+      // Only include activity if we found all participants
+      if (fromParticipantIds.length > 0 && toParticipantIds.length > 0) {
+        return {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          type: activity.type,
+          description: activity.description,
+          amount: activity.amount,
+          fromParticipantIds,
+          toParticipantIds,
+          splitEqually: true,
+          tips: []
+        };
+      }
+      return null;
+    }).filter(Boolean) as AdditionalActivity[];
+
+    setAdditionalActivities(newActivities);
   };
 
   const validationErrors: ValidationError[] = useMemo(() => {
@@ -107,11 +145,11 @@ function App() {
         nightBreakdown: [],
         totalNights: 0,
         roundingAdjustment: 0,
-        additionalModules: []
+        additionalActivities: []
       };
     }
-    return calculateCostSplit(participants, settings, additionalModules);
-  }, [participants, settings, additionalModules, hasErrors]);
+    return calculateCostSplit(participants, settings, additionalActivities);
+  }, [participants, settings, additionalActivities, hasErrors]);
 
   return (
     <div className="app">
@@ -149,13 +187,13 @@ function App() {
           />
         )}
 
-        {/* Additional Modules */}
-        <AdditionalModules
+        {/* Additional Activities */}
+        <AdditionalActivities
           participants={participants}
-          modules={additionalModules}
-          onAddModule={addAdditionalModule}
-          onRemoveModule={removeAdditionalModule}
-          onUpdateModule={updateAdditionalModule}
+          activities={additionalActivities}
+          onAddActivity={addAdditionalActivity}
+          onRemoveActivity={removeAdditionalActivity}
+          onUpdateActivity={updateAdditionalActivity}
         />
 
         {/* Results */}

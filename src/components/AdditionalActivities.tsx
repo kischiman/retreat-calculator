@@ -1,26 +1,27 @@
 import { useState } from 'react';
-import type { AdditionalModule, Participant, Tip } from '../types';
+import type { AdditionalActivity, Participant, Tip } from '../types';
 
-interface AdditionalModulesProps {
+interface AdditionalActivitiesProps {
   participants: Participant[];
-  modules: AdditionalModule[];
-  onAddModule: (module: Omit<AdditionalModule, 'id'>) => void;
-  onRemoveModule: (id: string) => void;
-  onUpdateModule: (id: string, module: Omit<AdditionalModule, 'id'>) => void;
+  activities: AdditionalActivity[];
+  onAddActivity: (activity: Omit<AdditionalActivity, 'id'>) => void;
+  onRemoveActivity: (id: string) => void;
+  onUpdateActivity: (id: string, activity: Omit<AdditionalActivity, 'id'>) => void;
 }
 
-export function AdditionalModules({ 
+export function AdditionalActivities({ 
   participants, 
-  modules, 
-  onAddModule, 
-  onRemoveModule, 
-  onUpdateModule 
-}: AdditionalModulesProps) {
-  const [tipModule, setTipModule] = useState<string | null>(null);
+  activities, 
+  onAddActivity, 
+  onRemoveActivity, 
+  onUpdateActivity 
+}: AdditionalActivitiesProps) {
+  const [tipActivity, setTipActivity] = useState<string | null>(null);
   const [tipAmount, setTipAmount] = useState<number>(0);
   const [tipGiver, setTipGiver] = useState<string>('');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newModule, setNewModule] = useState<Omit<AdditionalModule, 'id'>>({
+  const [splitAmongEveryone, setSplitAmongEveryone] = useState(false);
+  const [newActivity, setNewActivity] = useState<Omit<AdditionalActivity, 'id'>>({
     type: 'loan' as const,
     description: '',
     amount: 0,
@@ -30,8 +31,8 @@ export function AdditionalModules({
     tips: [] as Tip[]
   });
 
-  const resetNewModule = () => {
-    setNewModule({
+  const resetNewActivity = () => {
+    setNewActivity({
       type: 'loan' as const,
       description: '',
       amount: 0,
@@ -40,20 +41,33 @@ export function AdditionalModules({
       splitEqually: true,
       tips: []
     });
+    setSplitAmongEveryone(false);
   };
 
-  const handleAddModule = () => {
-    if (!newModule.description.trim() || newModule.amount <= 0 || 
-        newModule.fromParticipantIds.length === 0 || newModule.toParticipantIds.length === 0) {
+  const handleSplitAmongEveryoneChange = (checked: boolean) => {
+    setSplitAmongEveryone(checked);
+    if (checked) {
+      // When splitting among everyone, everyone is in toParticipantIds
+      const allParticipantIds = participants.map(p => p.id);
+      setNewActivity(prev => ({
+        ...prev,
+        toParticipantIds: allParticipantIds
+      }));
+    }
+  };
+
+  const handleAddActivity = () => {
+    if (!newActivity.description.trim() || newActivity.amount <= 0 || 
+        newActivity.fromParticipantIds.length === 0 || newActivity.toParticipantIds.length === 0) {
       return;
     }
     
-    onAddModule(newModule);
-    resetNewModule();
+    onAddActivity(newActivity);
+    resetNewActivity();
   };
 
   const toggleParticipantSelection = (participantId: string, field: 'fromParticipantIds' | 'toParticipantIds') => {
-    setNewModule(prev => ({
+    setNewActivity(prev => ({
       ...prev,
       [field]: prev[field].includes(participantId)
         ? prev[field].filter(id => id !== participantId)
@@ -61,36 +75,36 @@ export function AdditionalModules({
     }));
   };
 
-  const handleAddTip = (moduleId: string) => {
+  const handleAddTip = (activityId: string) => {
     if (tipAmount > 0 && tipGiver) {
-      const module = modules.find(m => m.id === moduleId);
-      if (module) {
+      const activity = activities.find(m => m.id === activityId);
+      if (activity) {
         const newTip: Tip = {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           amount: tipAmount,
           fromParticipantId: tipGiver
         };
         
-        const updatedModule = {
-          ...module,
-          tips: [...module.tips, newTip]
+        const updatedActivity = {
+          ...activity,
+          tips: [...activity.tips, newTip]
         };
-        onUpdateModule(moduleId, updatedModule);
-        setTipModule(null);
+        onUpdateActivity(activityId, updatedActivity);
+        setTipActivity(null);
         setTipAmount(0);
         setTipGiver('');
       }
     }
   };
 
-  const handleRemoveTip = (moduleId: string, tipId: string) => {
-    const module = modules.find(m => m.id === moduleId);
-    if (module) {
-      const updatedModule = {
-        ...module,
-        tips: module.tips.filter(tip => tip.id !== tipId)
+  const handleRemoveTip = (activityId: string, tipId: string) => {
+    const activity = activities.find(m => m.id === activityId);
+    if (activity) {
+      const updatedActivity = {
+        ...activity,
+        tips: activity.tips.filter(tip => tip.id !== tipId)
       };
-      onUpdateModule(moduleId, updatedModule);
+      onUpdateActivity(activityId, updatedActivity);
     }
   };
 
@@ -99,7 +113,7 @@ export function AdditionalModules({
     return participant ? participant.name : 'Unknown';
   };
 
-  const getModuleTypeLabel = (type: AdditionalModule['type']) => {
+  const getActivityTypeLabel = (type: AdditionalActivity['type']) => {
     switch (type) {
       case 'loan': return 'Loan';
       case 'service_provided': return 'Service Provided';
@@ -107,39 +121,39 @@ export function AdditionalModules({
     }
   };
 
-  const getModuleDescription = (module: AdditionalModule) => {
-    const fromNames = module.fromParticipantIds.map(id => getParticipantName(id));
-    const toNames = module.toParticipantIds.map(id => getParticipantName(id));
+  const getActivityDescription = (activity: AdditionalActivity) => {
+    const fromNames = activity.fromParticipantIds.map(id => getParticipantName(id));
+    const toNames = activity.toParticipantIds.map(id => getParticipantName(id));
     const fromText = fromNames.length > 1 ? `${fromNames.slice(0, -1).join(', ')} & ${fromNames.slice(-1)}` : fromNames[0];
     const toText = toNames.length > 1 ? `${toNames.slice(0, -1).join(', ')} & ${toNames.slice(-1)}` : toNames[0];
     
-    const amountPerProvider = module.amount / module.fromParticipantIds.length;
-    const amountPerRecipient = module.amount / module.toParticipantIds.length;
+    const amountPerProvider = activity.amount / activity.fromParticipantIds.length;
+    const amountPerRecipient = activity.amount / activity.toParticipantIds.length;
     
     let description = '';
     
-    switch (module.type) {
+    switch (activity.type) {
       case 'loan':
-        if (module.fromParticipantIds.length === 1 && module.toParticipantIds.length === 1) {
-          description = `${fromText} lends €${module.amount.toFixed(2)} to ${toText}`;
-        } else if (module.fromParticipantIds.length === 1) {
-          description = `${fromText} lends €${amountPerRecipient.toFixed(2)} each to ${toText} (total: €${module.amount.toFixed(2)})`;
+        if (activity.fromParticipantIds.length === 1 && activity.toParticipantIds.length === 1) {
+          description = `${fromText} lends €${activity.amount.toFixed(2)} to ${toText}`;
+        } else if (activity.fromParticipantIds.length === 1) {
+          description = `${fromText} lends €${amountPerRecipient.toFixed(2)} each to ${toText} (total: €${activity.amount.toFixed(2)})`;
         } else {
-          description = `${fromText} lend €${amountPerProvider.toFixed(2)} each to ${toText} (total: €${module.amount.toFixed(2)})`;
+          description = `${fromText} lend €${amountPerProvider.toFixed(2)} each to ${toText} (total: €${activity.amount.toFixed(2)})`;
         }
         break;
       case 'service_provided':
-        description = `${fromText} provide service to ${toText} for €${module.amount.toFixed(2)} total`;
+        description = `${fromText} provide service to ${toText} for €${activity.amount.toFixed(2)} total`;
         break;
       case 'service_purchased':
-        description = `${fromText} purchase service for ${toText} at €${module.amount.toFixed(2)} total`;
+        description = `${fromText} purchase service for ${toText} at €${activity.amount.toFixed(2)} total`;
         break;
     }
     
     // Add tips information if present
-    if (module.tips && module.tips.length > 0) {
-      const totalTips = module.tips.reduce((sum, tip) => sum + tip.amount, 0);
-      const tipText = module.tips.map(tip => {
+    if (activity.tips && activity.tips.length > 0) {
+      const totalTips = activity.tips.reduce((sum, tip) => sum + tip.amount, 0);
+      const tipText = activity.tips.map(tip => {
         const tipGiver = getParticipantName(tip.fromParticipantId);
         return `€${tip.amount.toFixed(2)} from ${tipGiver}`;
       }).join(', ');
@@ -154,31 +168,31 @@ export function AdditionalModules({
   }
 
   return (
-    <div className="additional-modules">
-      <h3>Additional Modules (Loans & Services)</h3>
-      <p className="module-description">
+    <div className="additional-activities">
+      <h3>Additional Activities (Loans & Services)</h3>
+      <p className="activity-description">
         Track loans between participants and services provided/purchased. This affects the final cost breakdown.
       </p>
 
-      {/* Add New Module Toggle */}
+      {/* Add New Activity Toggle */}
       <div className="section-header" onClick={() => setShowAddForm(!showAddForm)}>
-        <h4>Add New Module</h4>
+        <h4>Add New Activity</h4>
         <span className="collapse-icon">{showAddForm ? '−' : '+'}</span>
       </div>
 
-      {/* Add New Module Form */}
+      {/* Add New Activity Form */}
       {showAddForm && (
         <div className="section-content">
-          <div className="add-module-form">
+          <div className="add-activity-form">
         <div className="form-grid">
           <div className="form-group">
-            <label htmlFor="moduleType">Type</label>
+            <label htmlFor="activityType">Type</label>
             <select
-              id="moduleType"
-              value={newModule.type}
-              onChange={(e) => setNewModule(prev => ({ 
+              id="activityType"
+              value={newActivity.type}
+              onChange={(e) => setNewActivity(prev => ({ 
                 ...prev, 
-                type: e.target.value as AdditionalModule['type'] 
+                type: e.target.value as AdditionalActivity['type'] 
               }))}
             >
               <option value="loan">Loan</option>
@@ -188,36 +202,49 @@ export function AdditionalModules({
           </div>
 
           <div className="form-group">
-            <label htmlFor="moduleDescription">Description</label>
+            <label htmlFor="activityDescription">Description</label>
             <input
-              id="moduleDescription"
+              id="activityDescription"
               type="text"
               placeholder="e.g., Airport taxi, Grocery shopping, Gas money"
-              value={newModule.description}
-              onChange={(e) => setNewModule(prev => ({ ...prev, description: e.target.value }))}
+              value={newActivity.description}
+              onChange={(e) => setNewActivity(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="moduleAmount">Amount (€)</label>
+            <label htmlFor="activityAmount">Amount (€)</label>
             <input
-              id="moduleAmount"
+              id="activityAmount"
               type="number"
               step="0.01"
               min="0"
-              value={newModule.amount || ''}
-              onChange={(e) => setNewModule(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+              value={newActivity.amount || ''}
+              onChange={(e) => setNewActivity(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
             />
           </div>
 
+          <div className="form-group">
+            <label className="checkbox-item split-everyone-option">
+              <input
+                type="checkbox"
+                checked={splitAmongEveryone}
+                onChange={(e) => handleSplitAmongEveryoneChange(e.target.checked)}
+              />
+              Split cost among everyone (including service provider/lender)
+            </label>
+            <small className="help-text">
+              When checked, the cost is divided equally among all participants, and the service provider/lender pays their share too.
+            </small>
+          </div>
 
           <div className="participants-row">
             <div className="form-group participants-selection">
               <label>
-                {newModule.type === 'loan' ? 'Lenders' : 
-                 newModule.type === 'service_provided' ? 'Service Providers' : 'Service Purchasers'}
+                {newActivity.type === 'loan' ? 'Lenders' : 
+                 newActivity.type === 'service_provided' ? 'Service Providers' : 'Service Purchasers'}
                 <span className="selection-count">
-                  ({newModule.fromParticipantIds.length} selected)
+                  ({newActivity.fromParticipantIds.length} selected)
                 </span>
               </label>
               <div className="checkbox-group">
@@ -225,7 +252,7 @@ export function AdditionalModules({
                   <label key={p.id} className="checkbox-item">
                     <input
                       type="checkbox"
-                      checked={newModule.fromParticipantIds.includes(p.id)}
+                      checked={newActivity.fromParticipantIds.includes(p.id)}
                       onChange={() => toggleParticipantSelection(p.id, 'fromParticipantIds')}
                     />
                     {p.name}
@@ -236,21 +263,23 @@ export function AdditionalModules({
 
             <div className="form-group participants-selection">
               <label>
-                {newModule.type === 'loan' ? 'Borrowers' : 
-                 newModule.type === 'service_provided' ? 'Service Recipients' : 'Service Providers'}
+                {splitAmongEveryone ? 'Cost Split Among All Participants' :
+                 newActivity.type === 'loan' ? 'Borrowers' : 
+                 newActivity.type === 'service_provided' ? 'Service Recipients' : 'Service Providers'}
                 <span className="selection-count">
-                  ({newModule.toParticipantIds.length} selected)
+                  ({newActivity.toParticipantIds.length} selected)
                 </span>
               </label>
               <div className="checkbox-group">
                 {participants
-                  .filter(p => !newModule.fromParticipantIds.includes(p.id))
+                  .filter(p => splitAmongEveryone ? true : !newActivity.fromParticipantIds.includes(p.id))
                   .map(p => (
-                    <label key={p.id} className="checkbox-item">
+                    <label key={p.id} className={`checkbox-item ${splitAmongEveryone ? 'disabled' : ''}`}>
                       <input
                         type="checkbox"
-                        checked={newModule.toParticipantIds.includes(p.id)}
-                        onChange={() => toggleParticipantSelection(p.id, 'toParticipantIds')}
+                        checked={newActivity.toParticipantIds.includes(p.id)}
+                        onChange={() => !splitAmongEveryone && toggleParticipantSelection(p.id, 'toParticipantIds')}
+                        disabled={splitAmongEveryone}
                       />
                       {p.name}
                     </label>
@@ -262,57 +291,57 @@ export function AdditionalModules({
 
         <div className="form-actions">
           <button 
-            onClick={handleAddModule}
-            disabled={!newModule.description.trim() || newModule.amount <= 0 || 
-                      newModule.fromParticipantIds.length === 0 || newModule.toParticipantIds.length === 0}
+            onClick={handleAddActivity}
+            disabled={!newActivity.description.trim() || newActivity.amount <= 0 || 
+                      newActivity.fromParticipantIds.length === 0 || newActivity.toParticipantIds.length === 0}
             className="add-button"
           >
-            Add Module
+            Add Activity
           </button>
         </div>
         </div>
       </div>
       )}
 
-      {/* Existing Modules Grid */}
-      {modules.length > 0 && (
-        <div className="modules-grid">
-          <h4>Current Modules</h4>
-          <div className="modules-grid-container">
-            {modules.map(module => (
-              <div key={module.id} className="module-card">
-                <div className="module-card-header">
-                  <span className="module-type">{getModuleTypeLabel(module.type)}</span>
+      {/* Existing Activities Grid */}
+      {activities.length > 0 && (
+        <div className="activities-grid">
+          <h4>Current Activities</h4>
+          <div className="activities-grid-container">
+            {activities.map(activity => (
+              <div key={activity.id} className="activity-card">
+                <div className="activity-card-header">
+                  <span className="activity-type">{getActivityTypeLabel(activity.type)}</span>
                   <button 
-                    onClick={() => onRemoveModule(module.id)}
+                    onClick={() => onRemoveActivity(activity.id)}
                     className="remove-button-small"
-                    title="Remove module"
+                    title="Remove activity"
                   >
                     ×
                   </button>
                 </div>
-                <div className="module-card-content">
-                  <div className="module-description">
-                    <strong>{module.description}</strong>
+                <div className="activity-card-content">
+                  <div className="activity-description">
+                    <strong>{activity.description}</strong>
                   </div>
-                  <div className="module-amount">€{module.amount.toFixed(2)}</div>
-                  <div className="module-details">
-                    {getModuleDescription(module)}
+                  <div className="activity-amount">€{activity.amount.toFixed(2)}</div>
+                  <div className="activity-details">
+                    {getActivityDescription(activity)}
                   </div>
                   
                   {/* Tip functionality for services only */}
-                  {(module.type === 'service_provided' || module.type === 'service_purchased') && (
+                  {(activity.type === 'service_provided' || activity.type === 'service_purchased') && (
                     <div className="tip-section">
                       {/* Existing Tips */}
-                      {module.tips && module.tips.length > 0 && (
+                      {activity.tips && activity.tips.length > 0 && (
                         <div className="existing-tips">
-                          {module.tips.map((tip) => (
+                          {activity.tips.map((tip) => (
                             <div key={tip.id} className="existing-tip">
                               <div className="tip-info">
                                 Tip: €{tip.amount.toFixed(2)} from {getParticipantName(tip.fromParticipantId)}
                               </div>
                               <button 
-                                onClick={() => handleRemoveTip(module.id, tip.id)}
+                                onClick={() => handleRemoveTip(activity.id, tip.id)}
                                 className="remove-tip-button"
                               >
                                 Remove
@@ -323,7 +352,7 @@ export function AdditionalModules({
                       )}
                       
                       {/* Add Tip Form or Button */}
-                      {tipModule === module.id ? (
+                      {tipActivity === activity.id ? (
                         <div className="add-tip-form">
                           <div className="tip-inputs">
                             <input
@@ -346,7 +375,7 @@ export function AdditionalModules({
                           </div>
                           <div className="tip-actions">
                             <button 
-                              onClick={() => handleAddTip(module.id)}
+                              onClick={() => handleAddTip(activity.id)}
                               disabled={!tipAmount || !tipGiver}
                               className="add-tip-confirm"
                             >
@@ -354,7 +383,7 @@ export function AdditionalModules({
                             </button>
                             <button 
                               onClick={() => {
-                                setTipModule(null);
+                                setTipActivity(null);
                                 setTipAmount(0);
                                 setTipGiver('');
                               }}
@@ -366,7 +395,7 @@ export function AdditionalModules({
                         </div>
                       ) : (
                         <button 
-                          onClick={() => setTipModule(module.id)}
+                          onClick={() => setTipActivity(activity.id)}
                           className="add-tip-button"
                         >
                           Add Tip
@@ -381,9 +410,9 @@ export function AdditionalModules({
         </div>
       )}
 
-      {modules.length === 0 && (
-        <div className="no-modules">
-          <p>No additional modules added yet. Add loans or services above to include them in the cost breakdown.</p>
+      {activities.length === 0 && (
+        <div className="no-activities">
+          <p>No additional activities added yet. Add loans or services above to include them in the cost breakdown.</p>
         </div>
       )}
     </div>

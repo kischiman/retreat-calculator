@@ -761,25 +761,25 @@ body {
   }
 }
 
-/* Additional Modules */
-.additional-modules {
+/* Additional Activities */
+.additional-activities {
   padding: 30px;
   border-bottom: 1px solid #e9ecef;
   background: #f8f9fa;
 }
 
-.additional-modules h3 {
+.additional-activities h3 {
   color: #2c3e50;
   margin-bottom: 10px;
   font-size: 1.5rem;
 }
 
-.module-description {
+.activity-description {
   color: #6c757d;
   margin-bottom: 25px;
 }
 
-.add-module-form {
+.add-activity-form {
   background: white;
   padding: 25px;
   border-radius: 8px;
@@ -787,7 +787,7 @@ body {
   margin-bottom: 25px;
 }
 
-.add-module-form h4 {
+.add-activity-form h4 {
   margin-bottom: 20px;
   color: #495057;
 }
@@ -911,14 +911,14 @@ body {
   cursor: not-allowed;
 }
 
-.modules-list {
+.activities-list {
   background: white;
   border-radius: 8px;
   border: 1px solid #dee2e6;
   overflow: hidden;
 }
 
-.modules-list h4 {
+.activities-list h4 {
   padding: 20px 25px 15px;
   margin: 0;
   background: #f8f9fa;
@@ -926,23 +926,23 @@ body {
   color: #495057;
 }
 
-.module-item {
+.activity-item {
   padding: 20px 25px;
   border-bottom: 1px solid #f1f3f4;
 }
 
-.module-item:last-child {
+.activity-item:last-child {
   border-bottom: none;
 }
 
-.module-header {
+.activity-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
 
-.module-type {
+.activity-type {
   background: #e9ecef;
   padding: 4px 8px;
   border-radius: 12px;
@@ -952,24 +952,24 @@ body {
   text-transform: uppercase;
 }
 
-.module-amount {
+.activity-amount {
   font-weight: 600;
   color: #28a745;
   font-size: 1.1rem;
 }
 
-.module-description strong {
+.activity-description strong {
   color: #2c3e50;
   margin-bottom: 5px;
 }
 
-.module-details {
+.activity-details {
   color: #6c757d;
   font-size: 14px;
   margin-bottom: 15px;
 }
 
-.module-actions {
+.activity-actions {
   display: flex;
   justify-content: flex-end;
 }
@@ -989,7 +989,7 @@ body {
   background: #c82333;
 }
 
-.no-modules {
+.no-activities {
   background: white;
   padding: 40px;
   text-align: center;
@@ -997,20 +997,20 @@ body {
   border: 1px solid #dee2e6;
 }
 
-.no-modules p {
+.no-activities p {
   color: #6c757d;
   margin: 0;
 }
 
 /* Module Grid Layout */
-.modules-grid {
+.activities-grid {
   background: white;
   border-radius: 8px;
   border: 1px solid #dee2e6;
   overflow: hidden;
 }
 
-.modules-grid h4 {
+.activities-grid h4 {
   padding: 20px 25px 15px;
   margin: 0;
   background: #f8f9fa;
@@ -1018,14 +1018,14 @@ body {
   color: #495057;
 }
 
-.modules-grid-container {
+.activities-grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
   padding: 20px;
 }
 
-.module-card {
+.activity-card {
   background: white;
   border: 1px solid #dee2e6;
   border-radius: 8px;
@@ -1033,12 +1033,12 @@ body {
   transition: all 0.2s;
 }
 
-.module-card:hover {
+.activity-card:hover {
   border-color: #007bff;
   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
 }
 
-.module-card-header {
+.activity-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1047,11 +1047,11 @@ body {
   border-bottom: 1px solid #e9ecef;
 }
 
-.module-card-content {
+.activity-card-content {
   padding: 16px;
 }
 
-.module-card .module-type {
+.activity-card .activity-type {
   background: #e9ecef;
   padding: 4px 8px;
   border-radius: 12px;
@@ -1062,21 +1062,21 @@ body {
   letter-spacing: 0.5px;
 }
 
-.module-card .module-amount {
+.activity-card .activity-amount {
   font-size: 1.25rem;
   font-weight: 700;
   color: #28a745;
   margin: 8px 0;
 }
 
-.module-card .module-description strong {
+.activity-card .activity-description strong {
   color: #2c3e50;
   display: block;
   margin-bottom: 8px;
   font-size: 1.1rem;
 }
 
-.module-card .module-details {
+.activity-card .activity-details {
   color: #6c757d;
   font-size: 14px;
   line-height: 1.4;
@@ -1315,7 +1315,7 @@ body {
   margin-bottom: 4px;
 }
 
-/* Responsive design for additional modules */
+/* Responsive design for additional activities */
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -1335,7 +1335,7 @@ body {
     padding: 5px 10px;
   }
   
-  .modules-grid-container {
+  .activities-grid-container {
     grid-template-columns: 1fr;
   }
   
@@ -1775,4 +1775,36 @@ body {
   .tip-actions button {
     flex: 1;
   }
+}
+
+/* Split among everyone option */
+.split-everyone-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.split-everyone-option input[type="checkbox"] {
+  margin: 0;
+}
+
+.help-text {
+  display: block;
+  color: #6c757d;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-left: 24px;
+  line-height: 1.3;
+}
+
+/* Disabled checkbox styling */
+.checkbox-item.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.checkbox-item.disabled input[type="checkbox"] {
+  cursor: not-allowed;
 }

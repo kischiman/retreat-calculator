@@ -1,5 +1,5 @@
 import { addDays, eachDayOfInterval, format, parseISO, differenceInDays } from 'date-fns';
-import type { Participant, BookingSettings, NightBreakdown, ParticipantResult, CalculationResult, ValidationError, AdditionalModule, AdditionalModuleResult } from '../types';
+import type { Participant, BookingSettings, NightBreakdown, ParticipantResult, CalculationResult, ValidationError, AdditionalActivity, AdditionalActivityResult } from '../types';
 
 export function validateInputs(
   participants: Participant[],
@@ -70,7 +70,7 @@ export function calculateNights(arrivalDate: string, departureDate: string): num
 export function calculateCostSplit(
   participants: Participant[],
   settings: BookingSettings,
-  additionalModules: AdditionalModule[] = []
+  additionalActivities: AdditionalActivity[] = []
 ): CalculationResult {
   const startDate = parseISO(settings.startDate);
   const endDate = parseISO(settings.endDate);
@@ -103,23 +103,23 @@ export function calculateCostSplit(
     };
   });
   
-  // Calculate additional modules
-  const moduleResults: AdditionalModuleResult[] = additionalModules.map(module => {
-    const fromParticipants = module.fromParticipantIds
+  // Calculate additional activities
+  const activityResults: AdditionalActivityResult[] = additionalActivities.map(activity => {
+    const fromParticipants = activity.fromParticipantIds
       .map(id => participants.find(p => p.id === id)?.name)
       .filter(Boolean) as string[];
-    const toParticipants = module.toParticipantIds
+    const toParticipants = activity.toParticipantIds
       .map(id => participants.find(p => p.id === id)?.name)
       .filter(Boolean) as string[];
     
-    const amountPerProvider = module.amount / module.fromParticipantIds.length;
-    const amountPerRecipient = module.amount / module.toParticipantIds.length;
+    const amountPerProvider = activity.amount / activity.fromParticipantIds.length;
+    const amountPerRecipient = activity.amount / activity.toParticipantIds.length;
     
     return {
-      id: module.id,
-      type: module.type,
-      description: module.description,
-      amount: module.amount,
+      id: activity.id,
+      type: activity.type,
+      description: activity.description,
+      amount: activity.amount,
       fromParticipants,
       toParticipants,
       amountPerProvider,
@@ -143,52 +143,52 @@ export function calculateCostSplit(
     let additionalCharges = 0; // Money owed due to loans/services
     let additionalCredits = 0; // Money to be received from loans/services
 
-    additionalModules.forEach(module => {
-      const amountPerProvider = module.amount / module.fromParticipantIds.length;
-      const amountPerRecipient = module.amount / module.toParticipantIds.length;
+    additionalActivities.forEach(activity => {
+      const amountPerProvider = activity.amount / activity.fromParticipantIds.length;
+      const amountPerRecipient = activity.amount / activity.toParticipantIds.length;
       
-      if (module.type === 'loan') {
-        if (module.toParticipantIds.includes(participant.id)) {
+      if (activity.type === 'loan') {
+        if (activity.toParticipantIds.includes(participant.id)) {
           // This participant borrowed money
           additionalCharges += amountPerRecipient;
         }
-        if (module.fromParticipantIds.includes(participant.id)) {
+        if (activity.fromParticipantIds.includes(participant.id)) {
           // This participant lent money
           additionalCredits += amountPerProvider;
         }
-      } else if (module.type === 'service_provided') {
-        if (module.fromParticipantIds.includes(participant.id)) {
+      } else if (activity.type === 'service_provided') {
+        if (activity.fromParticipantIds.includes(participant.id)) {
           // This participant provided a service
           additionalCredits += amountPerProvider;
           // Add tips if they received any
-          if (module.tips && module.tips.length > 0) {
-            const totalTips = module.tips.reduce((sum, tip) => sum + tip.amount, 0);
-            additionalCredits += totalTips / module.fromParticipantIds.length;
+          if (activity.tips && activity.tips.length > 0) {
+            const totalTips = activity.tips.reduce((sum, tip) => sum + tip.amount, 0);
+            additionalCredits += totalTips / activity.fromParticipantIds.length;
           }
         }
-        if (module.toParticipantIds.includes(participant.id)) {
+        if (activity.toParticipantIds.includes(participant.id)) {
           // This participant received a service
           additionalCharges += amountPerRecipient;
         }
-      } else if (module.type === 'service_purchased') {
-        if (module.fromParticipantIds.includes(participant.id)) {
+      } else if (activity.type === 'service_purchased') {
+        if (activity.fromParticipantIds.includes(participant.id)) {
           // This participant purchased a service for others
           additionalCredits += amountPerProvider;
         }
-        if (module.toParticipantIds.includes(participant.id)) {
+        if (activity.toParticipantIds.includes(participant.id)) {
           // This participant owes for a service purchased for them
           additionalCharges += amountPerRecipient;
           // Add tips if they received any
-          if (module.tips && module.tips.length > 0) {
-            const totalTips = module.tips.reduce((sum, tip) => sum + tip.amount, 0);
-            additionalCredits += totalTips / module.toParticipantIds.length;
+          if (activity.tips && activity.tips.length > 0) {
+            const totalTips = activity.tips.reduce((sum, tip) => sum + tip.amount, 0);
+            additionalCredits += totalTips / activity.toParticipantIds.length;
           }
         }
       }
       
       // Handle tip payments separately
-      if (module.tips && module.tips.length > 0) {
-        const participantTips = module.tips.filter(tip => tip.fromParticipantId === participant.id);
+      if (activity.tips && activity.tips.length > 0) {
+        const participantTips = activity.tips.filter(tip => tip.fromParticipantId === participant.id);
         additionalCharges += participantTips.reduce((sum, tip) => sum + tip.amount, 0);
       }
     });
@@ -251,6 +251,6 @@ export function calculateCostSplit(
     nightBreakdown,
     totalNights,
     roundingAdjustment,
-    additionalModules: moduleResults
+    additionalActivities: activityResults
   };
 }

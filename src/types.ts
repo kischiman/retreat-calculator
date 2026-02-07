@@ -36,7 +36,7 @@ export interface ParticipantResult {
   calculation: string;
   additionalCharges: number; // From loans taken, services purchased
   additionalCredits: number; // From loans given, services provided
-  finalAmountEUR: number; // Final amount after additional modules
+  finalAmountEUR: number; // Final amount after additional activities
   finalAmountUSD: number;
 }
 
@@ -45,7 +45,7 @@ export interface CalculationResult {
   nightBreakdown: NightBreakdown[];
   totalNights: number;
   roundingAdjustment: number;
-  additionalModules: AdditionalModuleResult[];
+  additionalActivities: AdditionalActivityResult[];
 }
 
 export interface ValidationError {
@@ -60,7 +60,7 @@ export interface Tip {
   fromParticipantId: string; // Who gives the tip
 }
 
-export interface AdditionalModule {
+export interface AdditionalActivity {
   id: string;
   type: 'loan' | 'service_provided' | 'service_purchased';
   description: string;
@@ -71,7 +71,7 @@ export interface AdditionalModule {
   tips: Tip[]; // Multiple tips from different people
 }
 
-export interface AdditionalModuleResult {
+export interface AdditionalActivityResult {
   id: string;
   type: 'loan' | 'service_provided' | 'service_purchased';
   description: string;

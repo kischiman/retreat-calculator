@@ -1,18 +1,18 @@
 import { useRef, useState } from 'react';
-import type { Participant, BookingSettings, AdditionalModule } from '../types';
+import type { Participant, BookingSettings } from '../types';
 
 interface CsvImportProps {
   onImport: (data: {
     participants: Omit<Participant, 'id'>[];
     settings: Partial<BookingSettings>;
-    additionalModules: Omit<AdditionalModule, 'id' | 'fromParticipantIds' | 'toParticipantIds'>[];
+    additionalActivities: any[]; // Temporary type to handle name-based imports
   }) => void;
 }
 
 interface ParsedData {
   participants: Omit<Participant, 'id'>[];
   settings: Partial<BookingSettings>;
-  additionalModules: Omit<AdditionalModule, 'id' | 'fromParticipantIds' | 'toParticipantIds'>[];
+  additionalActivities: any[]; // Temporary type to handle name-based imports
 }
 
 export function CsvImport({ onImport }: CsvImportProps) {
@@ -27,7 +27,7 @@ export function CsvImport({ onImport }: CsvImportProps) {
     const data: ParsedData = {
       participants: [],
       settings: {},
-      additionalModules: []
+      additionalActivities: []
     };
 
     for (let i = 0; i < lines.length; i++) {
@@ -43,8 +43,8 @@ export function CsvImport({ onImport }: CsvImportProps) {
       } else if (line === 'PARTICIPANTS') {
         currentSection = 'PARTICIPANTS';
         continue;
-      } else if (line === 'ADDITIONAL_MODULES') {
-        currentSection = 'ADDITIONAL_MODULES';
+      } else if (line === 'ADDITIONAL_ACTIVITIES') {
+        currentSection = 'ADDITIONAL_ACTIVITIES';
         continue;
       } else if (line === 'RESULTS' || line === 'NIGHT BREAKDOWN') {
         currentSection = 'SKIP'; // Skip results and breakdown sections
@@ -80,17 +80,24 @@ export function CsvImport({ onImport }: CsvImportProps) {
             departureDate: parts[2].trim()
           });
         }
-      } else if (currentSection === 'ADDITIONAL_MODULES') {
+      } else if (currentSection === 'ADDITIONAL_ACTIVITIES') {
         const parts = line.split(',');
         if (parts.length >= 5) {
           // Remove quotes from description and participant lists
           const description = parts[1].replace(/^"(.*)"$/, '$1');
+          const fromParticipantsStr = parts[3].replace(/^"(.*)"$/, '$1');
+          const toParticipantsStr = parts[4].replace(/^"(.*)"$/, '$1');
           
-          data.additionalModules.push({
+          // Parse participant names (they will be mapped to IDs later)
+          const fromParticipants = fromParticipantsStr.split(';').filter(name => name.trim());
+          const toParticipants = toParticipantsStr.split(';').filter(name => name.trim());
+          
+          data.additionalActivities.push({
             type: parts[0] as 'loan' | 'service_provided' | 'service_purchased',
             description,
             amount: parseFloat(parts[2]) || 0,
-  
+            fromParticipantNames: fromParticipants, // Temporary field for import
+            toParticipantNames: toParticipants,     // Temporary field for import
             splitEqually: true,
             tips: []
           });
@@ -169,7 +176,7 @@ export function CsvImport({ onImport }: CsvImportProps) {
         </button>
         
         <div className="import-help">
-          <small>Import a previously exported CSV file to restore participants and modules</small>
+          <small>Import a previously exported CSV file to restore participants and activities</small>
         </div>
       </div>
 
@@ -195,7 +202,7 @@ export function CsvImport({ onImport }: CsvImportProps) {
             <ul>
               <li><strong>SETTINGS:</strong> Total cost, dates, exchange rate</li>
               <li><strong>PARTICIPANTS:</strong> Name, arrival date, departure date</li>
-              <li><strong>ADDITIONAL_MODULES:</strong> Loans and services (optional)</li>
+              <li><strong>ADDITIONAL_ACTIVITIES:</strong> Loans and services (optional)</li>
             </ul>
             <p>Use the Export CSV button to see the exact format.</p>
           </div>

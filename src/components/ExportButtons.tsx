@@ -70,14 +70,14 @@ export function ExportButtons({ result, showUSD, roundUSD, totalCost, settings }
     });
     rows.push('');
     
-    // Additional modules section
-    if (result.additionalModules && result.additionalModules.length > 0) {
-      rows.push('ADDITIONAL_MODULES');
+    // Additional activities section
+    if (result.additionalActivities && result.additionalActivities.length > 0) {
+      rows.push('ADDITIONAL_ACTIVITIES');
       rows.push('Type,Description,Amount,From Participants,To Participants');
-      result.additionalModules.forEach(module => {
-        const fromParticipants = module.fromParticipants.join(';');
-        const toParticipants = module.toParticipants.join(';');
-        rows.push(`${module.type},"${module.description}",${module.amount},"${fromParticipants}","${toParticipants}"`);
+      result.additionalActivities.forEach(activity => {
+        const fromParticipants = activity.fromParticipants.join(';');
+        const toParticipants = activity.toParticipants.join(';');
+        rows.push(`${activity.type},"${activity.description}",${activity.amount},"${fromParticipants}","${toParticipants}"`);
       });
       rows.push('');
     }
