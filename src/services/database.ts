@@ -14,9 +14,20 @@ export function initializeDatabase(url: string, token: string) {
 
 export function getRedisClient(): Redis {
   if (!redis) {
+    // Debug: Log all available environment variables
+    console.log('Available environment variables:', {
+      VITE_KV_REST_API_URL: import.meta.env.VITE_KV_REST_API_URL,
+      VITE_KV_REST_API_TOKEN: import.meta.env.VITE_KV_REST_API_TOKEN,
+      VITE_UPSTASH_REDIS_REST_URL: import.meta.env.VITE_UPSTASH_REDIS_REST_URL,
+      VITE_UPSTASH_REDIS_REST_TOKEN: import.meta.env.VITE_UPSTASH_REDIS_REST_TOKEN,
+      allKeys: Object.keys(import.meta.env).filter(key => key.includes('KV') || key.includes('REDIS') || key.includes('UPSTASH'))
+    });
+    
     // Try to initialize with environment variables (Vercel KV or manual setup)
     const url = import.meta.env.VITE_KV_REST_API_URL || import.meta.env.VITE_UPSTASH_REDIS_REST_URL;
     const token = import.meta.env.VITE_KV_REST_API_TOKEN || import.meta.env.VITE_UPSTASH_REDIS_REST_TOKEN;
+    
+    console.log('Redis connection attempt:', { url: url ? 'SET' : 'MISSING', token: token ? 'SET' : 'MISSING' });
     
     if (!url || !token) {
       throw new Error('Redis not initialized. Please call initializeDatabase() first or set environment variables.');
