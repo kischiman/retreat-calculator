@@ -1,73 +1,98 @@
-# React + TypeScript + Vite
+# Retreat Calculator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive cost-splitting calculator designed for retreats, group trips, and shared accommodations. Built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Dynamic Cost Calculation**: Automatically splits costs based on participant occupancy per night
+- **Participant Management**: Add participants with flexible arrival and departure dates
+- **Additional Modules**: Handle loans, services, and multiple tips between participants
+- **Database Integration**: Persistent storage using Upstash Redis KV
+- **Multi-Currency Support**: EUR/USD with real-time conversion
+- **Data Import/Export**: CSV functionality for easy data management
+- **Responsive Design**: Mobile-friendly interface with collapsible sections
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19, TypeScript, Vite
+- **Styling**: CSS Modules with responsive design
+- **Database**: Upstash Redis (serverless KV store)
+- **Deployment**: Vercel-ready configuration
+- **Charts**: Recharts for data visualization
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 18+ 
+- npm or yarn
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/kischiman/retreat-calculator.git
+cd retreat-calculator
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+The application will be available at `http://localhost:5173`
+
+### Build
+
+```bash
+npm run build
+```
+
+## Deployment
+
+### Vercel Deployment
+
+1. Connect your GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard:
+   - `VITE_UPSTASH_REDIS_REST_URL`: Your Upstash Redis REST URL
+   - `VITE_UPSTASH_REDIS_REST_TOKEN`: Your Upstash Redis REST token
+
+The project includes a `vercel.json` configuration for optimal deployment.
+
+### Environment Variables
+
+Create a `.env.local` file for development:
+
+```env
+VITE_UPSTASH_REDIS_REST_URL=your_redis_url
+VITE_UPSTASH_REDIS_REST_TOKEN=your_redis_token
+```
+
+## Usage
+
+1. **Setup**: Configure booking dates and total cost
+2. **Add Participants**: Enter names and stay duration
+3. **Additional Modules**: Add loans, services, or tips between participants
+4. **Review Results**: View detailed cost breakdown per person
+5. **Export**: Download results as CSV for record-keeping
+
+## Architecture
+
+- **Components**: Modular React components with TypeScript
+- **State Management**: React hooks for local state
+- **Database**: Upstash Redis for persistent storage
+- **Calculations**: Dynamic cost splitting algorithms
+- **UI/UX**: Collapsible sections, responsive design
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see LICENSE file for details
