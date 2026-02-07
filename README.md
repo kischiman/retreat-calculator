@@ -54,13 +54,15 @@ npm run build
 ### Vercel Deployment
 
 1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard:
+2. If you have Vercel KV (Upstash Redis) integration:
+   - The environment variables will be automatically mapped from your KV database
+   - No manual configuration needed - just deploy!
+
+3. For manual setup, set environment variables in Vercel dashboard:
    - `VITE_UPSTASH_REDIS_REST_URL`: Your Upstash Redis REST URL
    - `VITE_UPSTASH_REDIS_REST_TOKEN`: Your Upstash Redis REST token
 
-**Important**: Add these as regular environment variables (not secrets) in your Vercel project settings under Environment Variables.
-
-The project includes a `vercel.json` configuration for optimal deployment.
+The project includes a `vercel.json` configuration that automatically maps Vercel KV environment variables.
 
 ### Environment Variables
 
