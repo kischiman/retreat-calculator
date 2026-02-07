@@ -29,6 +29,7 @@ function App() {
   const [additionalModules, setAdditionalModules] = useState<AdditionalModule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'error' | null>(null);
+  const [isDatabaseConnected, setIsDatabaseConnected] = useState(false);
 
   const addParticipant = (participant: Omit<Participant, 'id'>) => {
     const newParticipant: Participant = {
@@ -126,6 +127,15 @@ function App() {
   // Auto-save function
   const saveToDatabase = useCallback(async () => {
     try {
+      // Check if database is available first
+      try {
+        getRedisClient();
+      } catch (error) {
+        // Database not configured, skip saving silently
+        console.log('Database not configured, running in local mode only');
+        return;
+      }
+
       // Only save if we have meaningful data
       if (participants.length === 0 && settings.totalCost === 0 && additionalModules.length === 0) {
         return;
@@ -161,8 +171,10 @@ function App() {
         // Check if database is available
         try {
           getRedisClient();
+          setIsDatabaseConnected(true);
         } catch (error) {
           console.log('Database not configured, using local state only');
+          setIsDatabaseConnected(false);
           setIsLoading(false);
           return;
         }
@@ -209,6 +221,21 @@ function App() {
   return (
     <div className="app">
       <div className="container">
+        {/* Database Connection Status */}
+        <div style={{ 
+          position: 'fixed', 
+          top: '20px', 
+          left: '20px', 
+          padding: '8px 12px', 
+          borderRadius: '5px',
+          color: 'white',
+          fontSize: '12px',
+          zIndex: 999,
+          backgroundColor: isDatabaseConnected ? '#28a745' : '#6c757d'
+        }}>
+          {isDatabaseConnected ? '🌐 Connected' : '💻 Local Mode'}
+        </div>
+
         {/* Save Status */}
         {saveStatus && (
           <div style={{ 
