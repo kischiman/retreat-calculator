@@ -82,18 +82,3 @@ export interface AdditionalModuleResult {
   amountPerRecipient: number; // Amount each recipient owes/receives
 }
 
-// Database types
-export interface SavedCalculation {
-  id: string;
-  name: string;
-  participants: Participant[];
-  settings: BookingSettings;
-  additionalModules: AdditionalModule[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DatabaseConfig {
-  url: string;
-  token: string;
-}

@@ -7,7 +7,6 @@ A comprehensive cost-splitting calculator designed for retreats, group trips, an
 - **Dynamic Cost Calculation**: Automatically splits costs based on participant occupancy per night
 - **Participant Management**: Add participants with flexible arrival and departure dates
 - **Additional Modules**: Handle loans, services, and multiple tips between participants
-- **Database Integration**: Persistent storage using Upstash Redis KV
 - **Multi-Currency Support**: EUR/USD with real-time conversion
 - **Data Import/Export**: CSV functionality for easy data management
 - **Responsive Design**: Mobile-friendly interface with collapsible sections
@@ -16,9 +15,8 @@ A comprehensive cost-splitting calculator designed for retreats, group trips, an
 
 - **Frontend**: React 19, TypeScript, Vite
 - **Styling**: CSS Modules with responsive design
-- **Database**: Upstash Redis (serverless KV store)
-- **Deployment**: Vercel-ready configuration
 - **Charts**: Recharts for data visualization
+- **Deployment**: Static site deployment ready
 
 ## Getting Started
 
@@ -51,27 +49,16 @@ npm run build
 
 ## Deployment
 
-### Vercel Deployment
+### Static Site Deployment
 
-1. Connect your GitHub repository to Vercel
-2. If you have Vercel KV (Upstash Redis) integration:
-   - The environment variables will be automatically mapped from your KV database
-   - No manual configuration needed - just deploy!
+This is a standard React/Vite application that can be deployed to any static hosting service:
 
-3. For manual setup, set environment variables in Vercel dashboard:
-   - `VITE_UPSTASH_REDIS_REST_URL`: Your Upstash Redis REST URL
-   - `VITE_UPSTASH_REDIS_REST_TOKEN`: Your Upstash Redis REST token
+- **Vercel**: Connect your GitHub repository to Vercel
+- **Netlify**: Drag and drop the `dist` folder after running `npm run build`
+- **GitHub Pages**: Use GitHub Actions to build and deploy
+- **AWS S3**: Upload the `dist` folder to an S3 bucket with static hosting
 
-The project includes a `vercel.json` configuration that automatically maps Vercel KV environment variables.
-
-### Environment Variables
-
-Create a `.env.local` file for development:
-
-```env
-VITE_UPSTASH_REDIS_REST_URL=your_redis_url
-VITE_UPSTASH_REDIS_REST_TOKEN=your_redis_token
-```
+No environment variables or database setup required.
 
 ## Usage
 
@@ -85,7 +72,6 @@ VITE_UPSTASH_REDIS_REST_TOKEN=your_redis_token
 
 - **Components**: Modular React components with TypeScript
 - **State Management**: React hooks for local state
-- **Database**: Upstash Redis for persistent storage
 - **Calculations**: Dynamic cost splitting algorithms
 - **UI/UX**: Collapsible sections, responsive design
 

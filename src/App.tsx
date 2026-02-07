@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import type { Participant, BookingSettings, ValidationError, AdditionalModule } from './types';
 import { calculateCostSplit, validateInputs } from './utils/calculations';
 import { BookingSettings as BookingSettingsComponent } from './components/BookingSettings';
@@ -10,10 +10,7 @@ import { AdditionalModules } from './components/AdditionalModules';
 import { CsvImport } from './components/CsvImport';
 import { OccupancyOverview } from './components/OccupancyOverview';
 import { exampleParticipants, exampleSettings } from './data/exampleData';
-import { saveCalculation, loadCalculation, getRedisClient } from './services/database';
 import './App.css';
-
-const SHARED_CALCULATION_ID = 'shared-retreat-calculation';
 
 function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -27,9 +24,6 @@ function App() {
     roundUSD: false
   });
   const [additionalModules, setAdditionalModules] = useState<AdditionalModule[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'error' | null>(null);
-  const [isDatabaseConnected, setIsDatabaseConnected] = useState(false);
 
   const addParticipant = (participant: Omit<Participant, 'id'>) => {
     const newParticipant: Participant = {
@@ -98,11 +92,6 @@ function App() {
     // Import additional modules (CSV import is simplified, so we skip modules for now)
     // In the future, CSV could include participant mappings to properly import modules
     setAdditionalModules([]);
-    
-    // Force a save after CSV import
-    setTimeout(() => {
-      saveToDatabase();
-    }, 500);
   };
 
   const validationErrors: ValidationError[] = useMemo(() => {
@@ -124,138 +113,9 @@ function App() {
     return calculateCostSplit(participants, settings, additionalModules);
   }, [participants, settings, additionalModules, hasErrors]);
 
-  // Auto-save function
-  const saveToDatabase = useCallback(async () => {
-    try {
-      // Check if database is available first
-      try {
-        getRedisClient();
-      } catch (error) {
-        // Database not configured, skip saving silently
-        console.log('Database not configured, running in local mode only');
-        return;
-      }
-
-      // Only save if we have meaningful data
-      if (participants.length === 0 && settings.totalCost === 0 && additionalModules.length === 0) {
-        return;
-      }
-
-      setSaveStatus('saving');
-      await saveCalculation(
-        SHARED_CALCULATION_ID,
-        'Shared Retreat Calculation',
-        participants,
-        settings,
-        additionalModules
-      );
-      setSaveStatus('saved');
-      
-      // Clear save status after 2 seconds
-      setTimeout(() => setSaveStatus(null), 2000);
-    } catch (error) {
-      console.error('Error saving calculation:', error);
-      // Log detailed error for debugging
-      if (error instanceof Error) {
-        console.error('Error details:', error.message, error.stack);
-      }
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus(null), 3000);
-    }
-  }, [participants, settings, additionalModules]);
-
-  // Load data on component mount
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Check if database is available
-        try {
-          getRedisClient();
-          setIsDatabaseConnected(true);
-        } catch (error) {
-          console.log('Database not configured, using local state only');
-          setIsDatabaseConnected(false);
-          setIsLoading(false);
-          return;
-        }
-
-        const savedData = await loadCalculation(SHARED_CALCULATION_ID);
-        if (savedData) {
-          setParticipants(savedData.participants);
-          setSettings(savedData.settings);
-          setAdditionalModules(savedData.additionalModules);
-        }
-      } catch (error) {
-        console.error('Error loading calculation:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Auto-save when data changes
-  useEffect(() => {
-    if (!isLoading) {
-      const timeoutId = setTimeout(() => {
-        saveToDatabase();
-      }, 1000); // Debounce saves by 1 second
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [participants, settings, additionalModules, isLoading, saveToDatabase]);
-
-  if (isLoading) {
-    return (
-      <div className="app">
-        <div className="container">
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <h2>Loading retreat calculation...</h2>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="app">
       <div className="container">
-        {/* Database Connection Status */}
-        <div style={{ 
-          position: 'fixed', 
-          top: '20px', 
-          left: '20px', 
-          padding: '8px 12px', 
-          borderRadius: '5px',
-          color: 'white',
-          fontSize: '12px',
-          zIndex: 999,
-          backgroundColor: isDatabaseConnected ? '#28a745' : '#6c757d'
-        }}>
-          {isDatabaseConnected ? '🌐 Connected' : '💻 Local Mode'}
-        </div>
-
-        {/* Save Status */}
-        {saveStatus && (
-          <div style={{ 
-            position: 'fixed', 
-            top: '20px', 
-            right: '20px', 
-            padding: '10px 15px', 
-            borderRadius: '5px',
-            color: 'white',
-            fontSize: '14px',
-            zIndex: 1000,
-            backgroundColor: 
-              saveStatus === 'saving' ? '#007bff' :
-              saveStatus === 'saved' ? '#28a745' : '#dc3545'
-          }}>
-            {saveStatus === 'saving' ? '💾 Saving...' :
-             saveStatus === 'saved' ? '✅ Saved' : '❌ Save failed'}
-          </div>
-        )}
-        
         {/* Header and Settings */}
         <BookingSettingsComponent
           settings={settings}
