@@ -58,6 +58,8 @@ npm run build
    - `VITE_UPSTASH_REDIS_REST_URL`: Your Upstash Redis REST URL
    - `VITE_UPSTASH_REDIS_REST_TOKEN`: Your Upstash Redis REST token
 
+**Important**: Add these as regular environment variables (not secrets) in your Vercel project settings under Environment Variables.
+
 The project includes a `vercel.json` configuration for optimal deployment.
 
 ### Environment Variables
