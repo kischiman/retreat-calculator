@@ -5,7 +5,7 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "env": {
-    "VITE_UPSTASH_REDIS_REST_URL": "$KV_REST_API_URL",
-    "VITE_UPSTASH_REDIS_REST_TOKEN": "$KV_REST_API_TOKEN"
+    "VITE_KV_REST_API_URL": "$KV_REST_API_URL",
+    "VITE_KV_REST_API_TOKEN": "$KV_REST_API_TOKEN"
   }
 }
