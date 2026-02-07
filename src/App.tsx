@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Participant, BookingSettings, ValidationError, AdditionalActivity } from './types';
 import { calculateCostSplit, validateInputs } from './utils/calculations';
+import { saveCalculation, loadCalculation, getShareableUrl } from './services/database';
 import { BookingSettings as BookingSettingsComponent } from './components/BookingSettings';
 import { ParticipantForm } from './components/ParticipantForm';
 import { ResultsTables } from './components/ResultsTables';
@@ -9,6 +10,7 @@ import { ValidationMessages } from './components/ValidationMessages';
 import { AdditionalActivities } from './components/AdditionalActivities';
 import { CsvImport } from './components/CsvImport';
 import { OccupancyOverview } from './components/OccupancyOverview';
+import { SaveShare } from './components/SaveShare';
 import { exampleParticipants, exampleSettings } from './data/exampleData';
 import './App.css';
 
@@ -24,6 +26,11 @@ function App() {
     roundUSD: false
   });
   const [additionalActivities, setAdditionalActivities] = useState<AdditionalActivity[]>([]);
+  
+  // Database state
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveMessage, setSaveMessage] = useState<string>('');
+  const [calculationId, setCalculationId] = useState<string>('');
 
   const addParticipant = (participant: Omit<Participant, 'id'>) => {
     const newParticipant: Participant = {
@@ -132,6 +139,103 @@ function App() {
     setAdditionalActivities(newActivities);
   };
 
+  // Save calculation to database
+  const handleSaveCalculation = async () => {
+    if (participants.length === 0 || !settings.totalCost) {
+      setSaveMessage('Please add participants and set a total cost before saving.');
+      setSaveStatus('error');
+      return;
+    }
+
+    setSaveStatus('saving');
+    setSaveMessage('Saving calculation...');
+
+    try {
+      const result = await saveCalculation(participants, settings, additionalActivities);
+      
+      if (result.success && result.calculationId) {
+        setCalculationId(result.calculationId);
+        setSaveStatus('saved');
+        setSaveMessage('Calculation saved! You can share this link with others.');
+      } else {
+        setSaveStatus('error');
+        setSaveMessage(result.message || 'Failed to save calculation');
+      }
+    } catch (error) {
+      setSaveStatus('error');
+      setSaveMessage('An error occurred while saving the calculation');
+    }
+
+    // Clear message after 5 seconds
+    setTimeout(() => {
+      setSaveStatus('idle');
+      setSaveMessage('');
+    }, 5000);
+  };
+
+  // Load calculation from URL parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const calcId = urlParams.get('calc');
+    
+    if (calcId) {
+      loadCalculationById(calcId);
+    }
+  }, []);
+
+  const loadCalculationById = async (id: string) => {
+    try {
+      const result = await loadCalculation(id);
+      
+      if (result.success && result.data) {
+        const { participants: loadedParticipants, settings: loadedSettings, additionalActivities: loadedActivities } = result.data;
+        
+        // Map participants with new IDs to avoid conflicts
+        const newParticipants = loadedParticipants.map(p => ({
+          ...p,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+        }));
+        
+        setParticipants(newParticipants);
+        updateSettings(loadedSettings);
+        
+        // Map activities with new participant IDs
+        if (loadedActivities) {
+          const activityMap = loadedParticipants.reduce((acc, oldP, index) => {
+            acc[oldP.id] = newParticipants[index].id;
+            return acc;
+          }, {} as Record<string, string>);
+          
+          const newActivities = loadedActivities.map(activity => ({
+            ...activity,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            fromParticipantIds: activity.fromParticipantIds.map(id => activityMap[id] || id),
+            toParticipantIds: activity.toParticipantIds.map(id => activityMap[id] || id)
+          }));
+          
+          setAdditionalActivities(newActivities);
+        }
+        
+        setSaveMessage('Calculation loaded successfully!');
+        setSaveStatus('saved');
+        
+        // Clear URL parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setSaveMessage('');
+        }, 3000);
+      } else {
+        setSaveMessage(result.message || 'Failed to load calculation');
+        setSaveStatus('error');
+      }
+    } catch (error) {
+      setSaveMessage('An error occurred while loading the calculation');
+      setSaveStatus('error');
+    }
+  };
+
   const validationErrors: ValidationError[] = useMemo(() => {
     return validateInputs(participants, settings);
   }, [participants, settings]);
@@ -205,6 +309,15 @@ function App() {
             onUpdateSettings={updateSettings}
           />
         )}
+
+        {/* Save & Share */}
+        <SaveShare
+          onSave={handleSaveCalculation}
+          saveStatus={saveStatus}
+          saveMessage={saveMessage}
+          calculationId={calculationId}
+          getShareableUrl={getShareableUrl}
+        />
 
         {/* Export Buttons */}
         {!hasErrors && calculationResult.participants.length > 0 && (
