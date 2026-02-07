@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Participant, BookingSettings, ValidationError, AdditionalModule } from './types';
 import { calculateCostSplit, validateInputs } from './utils/calculations';
 import { BookingSettings as BookingSettingsComponent } from './components/BookingSettings';
@@ -10,7 +10,10 @@ import { AdditionalModules } from './components/AdditionalModules';
 import { CsvImport } from './components/CsvImport';
 import { OccupancyOverview } from './components/OccupancyOverview';
 import { exampleParticipants, exampleSettings } from './data/exampleData';
+import { saveCalculation, loadCalculation, getRedisClient } from './services/database';
 import './App.css';
+
+const SHARED_CALCULATION_ID = 'shared-retreat-calculation';
 
 function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -24,6 +27,8 @@ function App() {
     roundUSD: false
   });
   const [additionalModules, setAdditionalModules] = useState<AdditionalModule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'error' | null>(null);
 
   const addParticipant = (participant: Omit<Participant, 'id'>) => {
     const newParticipant: Participant = {
@@ -101,28 +106,24 @@ function App() {
       }
 
       return {
+        ...module,
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        type: module.type,
-        description: module.description,
-        amount: module.amount,
         fromParticipantIds,
-        toParticipantIds,
-        splitEqually: true
-      } as AdditionalModule;
+        toParticipantIds
+      };
     }).filter(Boolean) as AdditionalModule[];
 
     setAdditionalModules(newModules);
   };
 
-  // Validation and calculations
   const validationErrors: ValidationError[] = useMemo(() => {
     return validateInputs(participants, settings);
   }, [participants, settings]);
 
-  const hasErrors = validationErrors.some(e => e.type === 'error');
+  const hasErrors = validationErrors.some(error => error.type === 'error');
 
   const calculationResult = useMemo(() => {
-    if (hasErrors || participants.length === 0) {
+    if (hasErrors) {
       return {
         participants: [],
         nightBreakdown: [],
@@ -134,9 +135,108 @@ function App() {
     return calculateCostSplit(participants, settings, additionalModules);
   }, [participants, settings, additionalModules, hasErrors]);
 
+  // Auto-save function
+  const saveToDatabase = useCallback(async () => {
+    try {
+      // Only save if we have meaningful data
+      if (participants.length === 0 && settings.totalCost === 0 && additionalModules.length === 0) {
+        return;
+      }
+
+      setSaveStatus('saving');
+      await saveCalculation(
+        SHARED_CALCULATION_ID,
+        'Shared Retreat Calculation',
+        participants,
+        settings,
+        additionalModules
+      );
+      setSaveStatus('saved');
+      
+      // Clear save status after 2 seconds
+      setTimeout(() => setSaveStatus(null), 2000);
+    } catch (error) {
+      console.error('Error saving calculation:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(null), 3000);
+    }
+  }, [participants, settings, additionalModules]);
+
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Check if database is available
+        try {
+          getRedisClient();
+        } catch (error) {
+          console.log('Database not configured, using local state only');
+          setIsLoading(false);
+          return;
+        }
+
+        const savedData = await loadCalculation(SHARED_CALCULATION_ID);
+        if (savedData) {
+          setParticipants(savedData.participants);
+          setSettings(savedData.settings);
+          setAdditionalModules(savedData.additionalModules);
+        }
+      } catch (error) {
+        console.error('Error loading calculation:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Auto-save when data changes
+  useEffect(() => {
+    if (!isLoading) {
+      const timeoutId = setTimeout(() => {
+        saveToDatabase();
+      }, 1000); // Debounce saves by 1 second
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [participants, settings, additionalModules, isLoading, saveToDatabase]);
+
+  if (isLoading) {
+    return (
+      <div className="app">
+        <div className="container">
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <h2>Loading retreat calculation...</h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <div className="container">
+        {/* Save Status */}
+        {saveStatus && (
+          <div style={{ 
+            position: 'fixed', 
+            top: '20px', 
+            right: '20px', 
+            padding: '10px 15px', 
+            borderRadius: '5px',
+            color: 'white',
+            fontSize: '14px',
+            zIndex: 1000,
+            backgroundColor: 
+              saveStatus === 'saving' ? '#007bff' :
+              saveStatus === 'saved' ? '#28a745' : '#dc3545'
+          }}>
+            {saveStatus === 'saving' ? '💾 Saving...' :
+             saveStatus === 'saved' ? '✅ Saved' : '❌ Save failed'}
+          </div>
+        )}
+        
         {/* Header and Settings */}
         <BookingSettingsComponent
           settings={settings}
@@ -148,9 +248,11 @@ function App() {
         />
 
         {/* Validation Messages */}
-        <ValidationMessages errors={validationErrors} />
+        {validationErrors.length > 0 && (
+          <ValidationMessages errors={validationErrors} />
+        )}
 
-        {/* Participants Management */}
+        {/* Participants */}
         <ParticipantForm
           participants={participants}
           onAddParticipant={addParticipant}
@@ -158,26 +260,17 @@ function App() {
           onUpdateParticipant={updateParticipant}
         />
 
-        {/* Participant Timeline Visualization */}
-        {participants.length > 0 && settings.startDate && settings.endDate && (
-          <div className="timeline-section">
-            <h3>Occupancy per Night</h3>
-            
-            {/* Occupancy overview with integrated detailed timeline */}
-            {calculationResult.nightBreakdown.length > 0 && (
-              <div className="occupancy-container">
-                <OccupancyOverview 
-                  nightBreakdown={calculationResult.nightBreakdown}
-                  startDate={settings.startDate}
-                  endDate={settings.endDate}
-                  participants={participants}
-                />
-              </div>
-            )}
-          </div>
+        {/* Occupancy Overview & Results */}
+        {!hasErrors && participants.length > 0 && calculationResult.nightBreakdown.length > 0 && (
+          <OccupancyOverview
+            participants={participants}
+            nightBreakdown={calculationResult.nightBreakdown}
+            startDate={settings.startDate}
+            endDate={settings.endDate}
+          />
         )}
 
-        {/* Additional Modules (Loans & Services) */}
+        {/* Additional Modules */}
         <AdditionalModules
           participants={participants}
           modules={additionalModules}
@@ -186,8 +279,8 @@ function App() {
           onUpdateModule={updateAdditionalModule}
         />
 
-        {/* Results Tables */}
-        {!hasErrors && (
+        {/* Results */}
+        {!hasErrors && calculationResult.participants.length > 0 && (
           <ResultsTables
             result={calculationResult}
             showUSD={settings.showUSD}
