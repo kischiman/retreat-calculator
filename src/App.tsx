@@ -94,26 +94,14 @@ function App() {
     // Import settings
     updateSettings(data.settings);
 
-    // Import additional modules
-    const newModules = data.additionalModules.map(module => {
-      // CSV import doesn't include participant IDs, so we start with empty arrays
-      const fromParticipantIds: string[] = [];
-      const toParticipantIds: string[] = [];
-      
-      if (fromParticipantIds.length === 0 || toParticipantIds.length === 0) {
-        console.warn(`Could not find participants for module: ${module.description}`);
-        return null;
-      }
-
-      return {
-        ...module,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        fromParticipantIds,
-        toParticipantIds
-      };
-    }).filter(Boolean) as AdditionalModule[];
-
-    setAdditionalModules(newModules);
+    // Import additional modules (CSV import is simplified, so we skip modules for now)
+    // In the future, CSV could include participant mappings to properly import modules
+    setAdditionalModules([]);
+    
+    // Force a save after CSV import
+    setTimeout(() => {
+      saveToDatabase();
+    }, 500);
   };
 
   const validationErrors: ValidationError[] = useMemo(() => {
@@ -157,6 +145,10 @@ function App() {
       setTimeout(() => setSaveStatus(null), 2000);
     } catch (error) {
       console.error('Error saving calculation:', error);
+      // Log detailed error for debugging
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+      }
       setSaveStatus('error');
       setTimeout(() => setSaveStatus(null), 3000);
     }
