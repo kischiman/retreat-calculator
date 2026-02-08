@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { participants, settings, additionalActivities } = req.body;
+    const { participants, settings, additionalActivities, existingId } = req.body;
     
     if (!participants || !settings) {
       return res.status(400).json({ 
@@ -41,14 +41,15 @@ export default async function handler(req, res) {
       });
     }
 
-    // Generate a unique key for this calculation
-    const calculationId = `calc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use existing ID or generate a new one
+    const calculationId = existingId || `calc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     const data = {
       participants,
       settings,
       additionalActivities: additionalActivities || [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     // Save to Redis with expiration (30 days)

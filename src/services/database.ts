@@ -24,7 +24,8 @@ const API_BASE = '/api';
 export async function saveCalculation(
   participants: Participant[],
   settings: BookingSettings,
-  additionalActivities: AdditionalActivity[]
+  additionalActivities: AdditionalActivity[],
+  existingId?: string
 ): Promise<SaveResponse> {
   try {
     const response = await fetch(`${API_BASE}/save`, {
@@ -35,7 +36,8 @@ export async function saveCalculation(
       body: JSON.stringify({
         participants,
         settings,
-        additionalActivities
+        additionalActivities,
+        existingId
       })
     });
 

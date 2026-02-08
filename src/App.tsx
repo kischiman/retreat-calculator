@@ -8,10 +8,8 @@ import { ResultsTables } from './components/ResultsTables';
 import { ExportButtons } from './components/ExportButtons';
 import { ValidationMessages } from './components/ValidationMessages';
 import { AdditionalActivities } from './components/AdditionalActivities';
-import { CsvImport } from './components/CsvImport';
 import { OccupancyOverview } from './components/OccupancyOverview';
 import { SaveShare } from './components/SaveShare';
-import { exampleParticipants, exampleSettings } from './data/exampleData';
 import './App.css';
 
 function App() {
@@ -24,7 +22,7 @@ function App() {
     exchangeRate: 1.07,
     showUSD: false,
     roundUSD: false,
-    splitEvenly: false
+    splitEvenly: true
   });
   const [additionalActivities, setAdditionalActivities] = useState<AdditionalActivity[]>([]);
   
@@ -55,15 +53,6 @@ function App() {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
-  const loadExampleData = () => {
-    const newParticipants = exampleParticipants.map(p => ({
-      ...p,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-    }));
-    setParticipants(newParticipants);
-    updateSettings(exampleSettings);
-  };
-
   const addAdditionalActivity = (activity: Omit<AdditionalActivity, 'id'>) => {
     const newActivity: AdditionalActivity = {
       ...activity,
@@ -80,64 +69,6 @@ function App() {
     setAdditionalActivities(prev =>
       prev.map(m => (m.id === id ? { ...activity, id } : m))
     );
-  };
-
-  const handleCsvImport = (data: {
-    participants: Omit<Participant, 'id'>[];
-    settings: Partial<BookingSettings>;
-    additionalActivities: any[]; // Temporary type to handle names
-  }) => {
-    // Import participants
-    const newParticipants = data.participants.map(p => ({
-      ...p,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-    }));
-    setParticipants(newParticipants);
-
-    // Import settings
-    updateSettings(data.settings);
-
-    // Import additional activities with participant name mapping
-    const newActivities = data.additionalActivities.map(activity => {
-      // Map participant names to IDs
-      const fromParticipantIds: string[] = [];
-      const toParticipantIds: string[] = [];
-      
-      if (activity.fromParticipantNames) {
-        activity.fromParticipantNames.forEach((name: string) => {
-          const participant = newParticipants.find(p => p.name.toLowerCase().trim() === name.toLowerCase().trim());
-          if (participant) {
-            fromParticipantIds.push(participant.id);
-          }
-        });
-      }
-      
-      if (activity.toParticipantNames) {
-        activity.toParticipantNames.forEach((name: string) => {
-          const participant = newParticipants.find(p => p.name.toLowerCase().trim() === name.toLowerCase().trim());
-          if (participant) {
-            toParticipantIds.push(participant.id);
-          }
-        });
-      }
-      
-      // Only include activity if we found all participants
-      if (fromParticipantIds.length > 0 && toParticipantIds.length > 0) {
-        return {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          type: activity.type,
-          description: activity.description,
-          amount: activity.amount,
-          fromParticipantIds,
-          toParticipantIds,
-          splitEqually: true,
-          tips: []
-        };
-      }
-      return null;
-    }).filter(Boolean) as AdditionalActivity[];
-
-    setAdditionalActivities(newActivities);
   };
 
   // Save calculation to database
@@ -158,6 +89,10 @@ function App() {
         setCalculationId(result.calculationId);
         setSaveStatus('saved');
         setSaveMessage('Calculation saved! You can share this link with others.');
+        
+        // Update URL without page reload
+        const newUrl = `${window.location.origin}${window.location.pathname}?calc=${result.calculationId}`;
+        window.history.replaceState({}, document.title, newUrl);
       } else {
         setSaveStatus('error');
         setSaveMessage(result.message || 'Failed to save calculation');
@@ -174,15 +109,38 @@ function App() {
     }, 5000);
   };
 
+  // Auto-save calculation to existing ID
+  const autoSaveCalculation = async () => {
+    if (!calculationId) return;
+    
+    try {
+      await saveCalculation(participants, settings, additionalActivities, calculationId);
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    }
+  };
+
   // Load calculation from URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const calcId = urlParams.get('calc');
     
     if (calcId) {
+      setCalculationId(calcId);
       loadCalculationById(calcId);
     }
   }, []);
+
+  // Auto-save when data changes (if we have a calculation ID)
+  useEffect(() => {
+    if (calculationId && participants.length > 0) {
+      const timeoutId = setTimeout(() => {
+        autoSaveCalculation();
+      }, 1000); // Debounce saves by 1 second
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [participants, settings, additionalActivities, calculationId]);
 
   const loadCalculationById = async (id: string) => {
     try {
@@ -263,10 +221,6 @@ function App() {
         <BookingSettingsComponent
           settings={settings}
           onUpdateSettings={updateSettings}
-          onLoadExample={loadExampleData}
-          csvImportComponent={
-            <CsvImport onImport={handleCsvImport} />
-          }
         />
 
         {/* Validation Messages */}
@@ -277,11 +231,9 @@ function App() {
         {/* Participants */}
         <ParticipantForm
           participants={participants}
-          settings={settings}
           onAddParticipant={addParticipant}
           onRemoveParticipant={removeParticipant}
           onUpdateParticipant={updateParticipant}
-          onUpdateSettings={updateSettings}
         />
 
         {/* Occupancy Overview & Results */}
