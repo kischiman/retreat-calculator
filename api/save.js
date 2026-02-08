@@ -1,13 +1,11 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client
 const redis = new Redis({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -37,7 +35,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { participants, settings, additionalActivities } = req.body;
     
     if (!participants || !settings) {
-      return res.status(400).json({ message: 'Missing required data' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Missing required data' 
+      });
     }
 
     // Generate a unique key for this calculation
@@ -63,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to save calculation',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }

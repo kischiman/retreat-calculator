@@ -1,13 +1,11 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client
 const redis = new Redis({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -24,28 +22,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { id } = req.query;
     
-    if (!id || typeof id !== 'string') {
-      return res.status(400).json({ message: 'Invalid calculation ID' });
+    if (!id) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Missing calculation ID' 
+      });
     }
 
+    // Get data from Redis
     const data = await redis.get(id);
     
     if (!data) {
-      return res.status(404).json({ message: 'Calculation not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Calculation not found or has expired' 
+      });
     }
 
-    const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+    // Parse the JSON data
+    const calculationData = typeof data === 'string' ? JSON.parse(data) : data;
     
     res.status(200).json({ 
       success: true, 
-      data: parsedData 
+      data: calculationData,
+      message: 'Calculation loaded successfully' 
     });
   } catch (error) {
     console.error('Load error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to load calculation',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
