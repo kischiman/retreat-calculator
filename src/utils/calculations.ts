@@ -136,16 +136,31 @@ export function calculateCostSplit(
   let totalNightlyRateCost = 0;
   const nightlyRateResults = new Map<string, number>();
   
-  nightlyRateParticipants.forEach(participant => {
-    let participantCost = 0;
-    nightBreakdown.forEach(night => {
-      if (night.presentParticipants.includes(participant.name)) {
-        participantCost += night.perPersonCost;
-      }
+  if (nightlyRateParticipants.length === participants.length) {
+    // Everyone is on nightly rate - use proportional calculation
+    const totalNightParticipantCombos = nightBreakdown.reduce((sum, night) => sum + night.participantCount, 0);
+    
+    nightlyRateParticipants.forEach(participant => {
+      const participantNights = nightBreakdown.filter(night => 
+        night.presentParticipants.includes(participant.name)
+      ).length;
+      const participantCost = (participantNights / totalNightParticipantCombos) * settings.totalCost;
+      nightlyRateResults.set(participant.id, participantCost);
+      totalNightlyRateCost += participantCost;
     });
-    nightlyRateResults.set(participant.id, participantCost);
-    totalNightlyRateCost += participantCost;
-  });
+  } else {
+    // Mixed mode - calculate nightly rate participants first
+    nightlyRateParticipants.forEach(participant => {
+      let participantCost = 0;
+      nightBreakdown.forEach(night => {
+        if (night.presentParticipants.includes(participant.name)) {
+          participantCost += night.perPersonCost;
+        }
+      });
+      nightlyRateResults.set(participant.id, participantCost);
+      totalNightlyRateCost += participantCost;
+    });
+  }
   
   // Calculate remaining cost for even split participants
   const remainingCost = settings.totalCost - totalNightlyRateCost;
