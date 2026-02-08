@@ -21,6 +21,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  // Check environment variables
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    console.error('Missing environment variables:', {
+      url: !!process.env.KV_REST_API_URL,
+      token: !!process.env.KV_REST_API_TOKEN
+    });
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server configuration error: Missing database credentials' 
+    });
+  }
+
   try {
     const { participants, settings, additionalActivities } = req.body;
     
