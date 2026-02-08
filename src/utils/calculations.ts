@@ -127,23 +127,44 @@ export function calculateCostSplit(
     };
   });
 
-  // Calculate participant totals
+  // Calculate participant totals with mixed split methods
+  // First, separate participants by calculation method
+  const nightlyRateParticipants = participants.filter(p => p.useNightlyRate);
+  const evenSplitParticipants = participants.filter(p => !p.useNightlyRate);
+  
+  // Calculate costs for nightly rate participants
+  let totalNightlyRateCost = 0;
+  const nightlyRateResults = new Map<string, number>();
+  
+  nightlyRateParticipants.forEach(participant => {
+    let participantCost = 0;
+    nightBreakdown.forEach(night => {
+      if (night.presentParticipants.includes(participant.name)) {
+        participantCost += night.perPersonCost;
+      }
+    });
+    nightlyRateResults.set(participant.id, participantCost);
+    totalNightlyRateCost += participantCost;
+  });
+  
+  // Calculate remaining cost for even split participants
+  const remainingCost = settings.totalCost - totalNightlyRateCost;
+  const costPerEvenSplitParticipant = evenSplitParticipants.length > 0 
+    ? remainingCost / evenSplitParticipants.length 
+    : 0;
+
   const participantResults: ParticipantResult[] = participants.map(participant => {
     const nights = calculateNights(participant.arrivalDate, participant.departureDate);
     
-    // Sum up costs for all nights this participant is present
+    // Calculate cost based on participant's split method
     let totalCostEUR = 0;
     
-    if (settings.splitEvenly) {
-      // Split total cost evenly among all participants
-      totalCostEUR = settings.totalCost / participants.length;
+    if (participant.useNightlyRate) {
+      // Use nightly rate calculation
+      totalCostEUR = nightlyRateResults.get(participant.id) || 0;
     } else {
-      // Calculate based on nights present (original logic)
-      nightBreakdown.forEach(night => {
-        if (night.presentParticipants.includes(participant.name)) {
-          totalCostEUR += night.perPersonCost;
-        }
-      });
+      // Use even split of remaining cost
+      totalCostEUR = costPerEvenSplitParticipant;
     }
 
     // Calculate additional charges and credits
@@ -206,7 +227,9 @@ export function calculateCostSplit(
     const effectivePerNightEUR = nights > 0 ? totalCostEUR / nights : 0;
     const effectivePerNightUSD = nights > 0 ? totalCostUSD / nights : 0;
     
-    const calculation = `${nights} × €${effectivePerNightEUR.toFixed(2)} = €${totalCostEUR.toFixed(2)}`;
+    const calculation = participant.useNightlyRate 
+      ? `${nights} × €${effectivePerNightEUR.toFixed(2)} = €${totalCostEUR.toFixed(2)}` 
+      : `Even split: €${totalCostEUR.toFixed(2)}`;
     
     return {
       id: participant.id,

@@ -3,6 +3,7 @@ export interface Participant {
   name: string;
   arrivalDate: string; // YYYY-MM-DD format
   departureDate: string; // YYYY-MM-DD format
+  useNightlyRate?: boolean; // If true, calculate based on nights stayed vs even split
 }
 
 export interface BookingSettings {
