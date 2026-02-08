@@ -88,7 +88,6 @@ export function ParticipantForm({
                 <th>Name</th>
                 <th>Arrival Date</th>
                 <th>Departure Date</th>
-                <th>Nightly Rate</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -132,17 +131,6 @@ export function ParticipantForm({
                         {format(parseISO(participant.departureDate), 'MMM dd, yyyy')}
                       </span>
                     )}
-                  </td>
-                  <td>
-                    <label className="checkbox-container">
-                      <input
-                        type="checkbox"
-                        checked={participant.useNightlyRate || false}
-                        onChange={(e) => handleParticipantChange(participant.id, 'useNightlyRate', e.target.checked)}
-                        title="Calculate based on nights stayed instead of even split"
-                      />
-                      <span className="checkmark"></span>
-                    </label>
                   </td>
                   <td>
                     <div className="participant-actions">
@@ -191,14 +179,14 @@ export function ParticipantForm({
       )}
 
 
-      {/* Nightly Rate Explanation */}
+      {/* Calculation Method Explanation */}
       {participants.length > 0 && (
         <div className="date-convention-note">
           <h4>Cost Calculation Methods</h4>
           <p>
-            <strong>Even Split (default):</strong> Total cost is divided equally among all participants<br/>
-            <strong>Nightly Rate:</strong> Cost calculated based on actual nights stayed (check the box for participants staying fewer nights)<br/>
-            <strong>Mixed Mode:</strong> Those with nightly rate pay proportionally, remaining cost split equally among others
+            <strong>Equal Split:</strong> Total cost is divided equally among all participants<br/>
+            <strong>Nightly Rate:</strong> Cost calculated proportionally based on actual nights stayed<br/>
+            <strong>Weekly Rate:</strong> Days are rounded up to full weeks, then cost is calculated proportionally
           </p>
         </div>
       )}

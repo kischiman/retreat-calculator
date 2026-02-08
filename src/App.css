@@ -1948,30 +1948,29 @@ body {
   font-size: 1rem;
 }
 
-/* Nightly Rate Checkbox */
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Calculation Method Selector */
+.calculation-method-group {
+  grid-column: 1 / -1; /* Span full width */
+}
+
+.calculation-method-select {
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
   cursor: pointer;
+  transition: border-color 0.2s ease;
 }
 
-.checkbox-container input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #007bff;
+.calculation-method-select:hover {
+  border-color: #007bff;
 }
 
-.participants-table th:nth-child(4) {
-  text-align: center;
-  font-size: 0.9rem;
-  color: #6c757d;
-}
-
-.participants-table td:nth-child(4) {
-  text-align: center;
-  padding: 8px;
+.calculation-method-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .split-option-description {

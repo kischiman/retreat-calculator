@@ -3,8 +3,9 @@ export interface Participant {
   name: string;
   arrivalDate: string; // YYYY-MM-DD format
   departureDate: string; // YYYY-MM-DD format
-  useNightlyRate?: boolean; // If true, calculate based on nights stayed vs even split
 }
+
+export type CalculationMethod = 'equal' | 'nightly' | 'weekly';
 
 export interface BookingSettings {
   totalCost: number;
@@ -15,6 +16,7 @@ export interface BookingSettings {
   showUSD: boolean;
   roundUSD: boolean;
   splitEvenly: boolean; // Split total cost evenly among all participants regardless of stay duration
+  calculationMethod: CalculationMethod; // How to calculate costs: equal split, nightly rate, or weekly rate
 }
 
 export interface NightBreakdown {

@@ -61,5 +61,6 @@ export const exampleSettings: Partial<BookingSettings> = {
   exchangeRate: 1.07,
   showUSD: false,
   roundUSD: false,
-  splitEvenly: false
+  splitEvenly: false,
+  calculationMethod: 'equal'
 };

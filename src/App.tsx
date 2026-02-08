@@ -23,7 +23,8 @@ function App() {
     exchangeRate: 1.07,
     showUSD: false,
     roundUSD: false,
-    splitEvenly: true
+    splitEvenly: true,
+    calculationMethod: 'equal'
   });
   const [additionalActivities, setAdditionalActivities] = useState<AdditionalActivity[]>([]);
   
