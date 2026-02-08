@@ -10,6 +10,7 @@ import { ValidationMessages } from './components/ValidationMessages';
 import { AdditionalActivities } from './components/AdditionalActivities';
 import { OccupancyOverview } from './components/OccupancyOverview';
 import { SaveShare } from './components/SaveShare';
+import { CsvImport } from './components/CsvImport';
 import './App.css';
 
 function App() {
@@ -69,6 +70,64 @@ function App() {
     setAdditionalActivities(prev =>
       prev.map(m => (m.id === id ? { ...activity, id } : m))
     );
+  };
+
+  const handleCsvImport = (data: {
+    participants: Omit<Participant, 'id'>[];
+    settings: Partial<BookingSettings>;
+    additionalActivities: any[];
+  }) => {
+    // Import participants
+    const newParticipants = data.participants.map(p => ({
+      ...p,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    }));
+    setParticipants(newParticipants);
+
+    // Import settings
+    updateSettings(data.settings);
+
+    // Import additional activities with participant name mapping
+    const newActivities = data.additionalActivities.map(activity => {
+      // Map participant names to IDs
+      const fromParticipantIds: string[] = [];
+      const toParticipantIds: string[] = [];
+      
+      if (activity.fromParticipantNames) {
+        activity.fromParticipantNames.forEach((name: string) => {
+          const participant = newParticipants.find(p => p.name.toLowerCase().trim() === name.toLowerCase().trim());
+          if (participant) {
+            fromParticipantIds.push(participant.id);
+          }
+        });
+      }
+      
+      if (activity.toParticipantNames) {
+        activity.toParticipantNames.forEach((name: string) => {
+          const participant = newParticipants.find(p => p.name.toLowerCase().trim() === name.toLowerCase().trim());
+          if (participant) {
+            toParticipantIds.push(participant.id);
+          }
+        });
+      }
+      
+      // Only include activity if we found all participants
+      if (fromParticipantIds.length > 0 && toParticipantIds.length > 0) {
+        return {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          type: activity.type,
+          description: activity.description,
+          amount: activity.amount,
+          fromParticipantIds,
+          toParticipantIds,
+          splitEqually: true,
+          tips: []
+        };
+      }
+      return null;
+    }).filter(Boolean) as AdditionalActivity[];
+
+    setAdditionalActivities(newActivities);
   };
 
   // Save calculation to database
@@ -221,6 +280,9 @@ function App() {
         <BookingSettingsComponent
           settings={settings}
           onUpdateSettings={updateSettings}
+          csvImportComponent={
+            <CsvImport onImport={handleCsvImport} />
+          }
         />
 
         {/* Validation Messages */}

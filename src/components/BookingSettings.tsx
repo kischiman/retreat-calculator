@@ -4,11 +4,13 @@ import { differenceInDays, parseISO } from 'date-fns';
 interface BookingSettingsProps {
   settings: BookingSettingsType;
   onUpdateSettings: (settings: Partial<BookingSettingsType>) => void;
+  csvImportComponent?: React.ReactNode;
 }
 
 export function BookingSettings({ 
   settings, 
-  onUpdateSettings
+  onUpdateSettings,
+  csvImportComponent
 }: BookingSettingsProps) {
   const totalNights = settings.startDate && settings.endDate 
     ? Math.max(0, differenceInDays(parseISO(settings.endDate), parseISO(settings.startDate)) + 1)
@@ -17,7 +19,12 @@ export function BookingSettings({
   return (
     <div className="booking-settings">
       <div className="settings-header">
-        <h2>Retreat Cost Split Calculator</h2>
+        <h2>Sanctuary Calculator</h2>
+        {csvImportComponent && (
+          <div className="header-actions">
+            {csvImportComponent}
+          </div>
+        )}
       </div>
       
       <div className="settings-grid">
