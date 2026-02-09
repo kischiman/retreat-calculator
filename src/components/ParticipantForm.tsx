@@ -1,19 +1,23 @@
 import { useState } from 'react';
-import type { Participant } from '../types';
+import type { Participant, BookingSettings, CalculationMethod } from '../types';
 import { format, parseISO } from 'date-fns';
 
 interface ParticipantFormProps {
   participants: Participant[];
+  settings: BookingSettings;
   onAddParticipant: (participant: Omit<Participant, 'id'>) => void;
   onRemoveParticipant: (id: string) => void;
   onUpdateParticipant: (id: string, participant: Omit<Participant, 'id'>) => void;
+  onUpdateSettings: (settings: Partial<BookingSettings>) => void;
 }
 
 export function ParticipantForm({
   participants,
+  settings,
   onAddParticipant,
   onRemoveParticipant,
-  onUpdateParticipant
+  onUpdateParticipant,
+  onUpdateSettings
 }: ParticipantFormProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<string | null>(null);
@@ -178,6 +182,24 @@ export function ParticipantForm({
         <p className="no-participants">No participants added yet. Add your first participant above.</p>
       )}
 
+      {/* Cost Calculation Method Selector */}
+      {participants.length > 0 && (
+        <div className="calculation-method-section">
+          <label htmlFor="calculationMethod" className="calculation-method-label">
+            Cost Calculation Method
+          </label>
+          <select
+            id="calculationMethod"
+            value={settings.calculationMethod}
+            onChange={(e) => onUpdateSettings({ calculationMethod: e.target.value as CalculationMethod })}
+            className="calculation-method-select"
+          >
+            <option value="equal">Equal Split - Split cost evenly among all participants</option>
+            <option value="nightly">Nightly Rate - Cost based on actual nights stayed</option>
+            <option value="weekly">Weekly Rate - Round up days to weeks and charge weekly</option>
+          </select>
+        </div>
+      )}
 
       {/* Calculation Method Explanation */}
       {participants.length > 0 && (

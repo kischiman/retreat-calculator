@@ -1,4 +1,4 @@
-import type { BookingSettings as BookingSettingsType, CalculationMethod } from '../types';
+import type { BookingSettings as BookingSettingsType } from '../types';
 import { differenceInDays, parseISO } from 'date-fns';
 
 interface BookingSettingsProps {
@@ -72,19 +72,6 @@ export function BookingSettings({
           />
         </div>
 
-        <div className="setting-group calculation-method-group">
-          <label htmlFor="calculationMethod">Cost Calculation Method</label>
-          <select
-            id="calculationMethod"
-            value={settings.calculationMethod}
-            onChange={(e) => onUpdateSettings({ calculationMethod: e.target.value as CalculationMethod })}
-            className="calculation-method-select"
-          >
-            <option value="equal">Equal Split - Split cost evenly among all participants</option>
-            <option value="nightly">Nightly Rate - Cost based on actual nights stayed</option>
-            <option value="weekly">Weekly Rate - Round up days to weeks and charge weekly</option>
-          </select>
-        </div>
       </div>
 
       <div className="booking-summary">

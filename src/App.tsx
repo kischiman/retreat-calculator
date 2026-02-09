@@ -294,9 +294,11 @@ function App() {
         {/* Participants */}
         <ParticipantForm
           participants={participants}
+          settings={settings}
           onAddParticipant={addParticipant}
           onRemoveParticipant={removeParticipant}
           onUpdateParticipant={updateParticipant}
+          onUpdateSettings={updateSettings}
         />
 
         {/* Occupancy Overview & Results */}

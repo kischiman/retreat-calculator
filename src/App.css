@@ -1948,12 +1948,25 @@ body {
   font-size: 1rem;
 }
 
-/* Calculation Method Selector */
-.calculation-method-group {
-  grid-column: 1 / -1; /* Span full width */
+/* Calculation Method Selector in Participants Section */
+.calculation-method-section {
+  margin: 20px 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.calculation-method-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-size: 1rem;
 }
 
 .calculation-method-select {
+  width: 100%;
   padding: 12px;
   border: 1px solid #ced4da;
   border-radius: 4px;
