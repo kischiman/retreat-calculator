@@ -6,10 +6,11 @@ interface ResultsTablesProps {
   result: CalculationResult;
   showUSD: boolean;
   roundUSD: boolean;
+  calculationMethod: 'equal' | 'nightly' | 'weekly';
   onUpdateSettings: (settings: { showUSD?: boolean; roundUSD?: boolean }) => void;
 }
 
-export function ResultsTables({ result, showUSD, roundUSD, onUpdateSettings }: ResultsTablesProps) {
+export function ResultsTables({ result, showUSD, roundUSD, calculationMethod, onUpdateSettings }: ResultsTablesProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   if (result.participants.length === 0) {
@@ -73,24 +74,32 @@ export function ResultsTables({ result, showUSD, roundUSD, onUpdateSettings }: R
           <thead>
             <tr>
               <th>Name</th>
-              <th>Arrival</th>
-              <th>Departure</th>
-              <th>Nights</th>
+              {calculationMethod !== 'equal' && (
+                <>
+                  <th>Arrival</th>
+                  <th>Departure</th>
+                  <th>Nights</th>
+                </>
+              )}
               <th>Base Amount (€)</th>
               <th>Add'l Charges</th>
               <th>Add'l Credits</th>
               <th>Final Amount (€)</th>
               {showUSD && <th>Final Amount ($)</th>}
-              <th>Effective €/night</th>
+              {calculationMethod !== 'equal' && <th>Effective €/night</th>}
             </tr>
           </thead>
           <tbody>
             {result.participants.map((participant) => (
               <tr key={participant.id}>
                 <td>{participant.name}</td>
-                <td>{format(parseISO(participant.arrivalDate), 'MMM dd')}</td>
-                <td>{format(parseISO(participant.departureDate), 'MMM dd')}</td>
-                <td>{participant.nights}</td>
+                {calculationMethod !== 'equal' && (
+                  <>
+                    <td>{format(parseISO(participant.arrivalDate), 'MMM dd')}</td>
+                    <td>{format(parseISO(participant.departureDate), 'MMM dd')}</td>
+                    <td>{participant.nights}</td>
+                  </>
+                )}
                 <td>{formatCurrency(participant.amountEUR, 'EUR')}</td>
                 <td className="charges-cell">
                   {participant.additionalCharges > 0 
@@ -104,19 +113,19 @@ export function ResultsTables({ result, showUSD, roundUSD, onUpdateSettings }: R
                 </td>
                 <td className="final-amount"><strong>{formatCurrency(participant.finalAmountEUR, 'EUR')}</strong></td>
                 {showUSD && <td className="final-amount"><strong>{formatCurrency(participant.finalAmountUSD, 'USD')}</strong></td>}
-                <td>€{participant.effectivePerNightEUR.toFixed(2)}</td>
+                {calculationMethod !== 'equal' && <td>€{participant.effectivePerNightEUR.toFixed(2)}</td>}
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="total-row">
-              <td colSpan={4}><strong>Total</strong></td>
+              <td colSpan={calculationMethod === 'equal' ? 1 : 4}><strong>Total</strong></td>
               <td><strong>{formatCurrency(totalEUR, 'EUR')}</strong></td>
               <td><strong>+€{totalCharges.toFixed(2)}</strong></td>
               <td><strong>-€{totalCredits.toFixed(2)}</strong></td>
               <td><strong>{formatCurrency(totalFinalEUR, 'EUR')}</strong></td>
               {showUSD && <td><strong>{formatCurrency(totalFinalUSD, 'USD')}</strong></td>}
-              <td></td>
+              {calculationMethod !== 'equal' && <td></td>}
             </tr>
           </tfoot>
         </table>
@@ -128,18 +137,20 @@ export function ResultsTables({ result, showUSD, roundUSD, onUpdateSettings }: R
         )}
       </div>
 
-      {/* Night Breakdown Toggle */}
-      <div className="breakdown-toggle">
-        <button 
-          onClick={() => setShowBreakdown(!showBreakdown)}
-          className="toggle-button"
-        >
-          {showBreakdown ? 'Hide' : 'Show'} Night-by-Night Breakdown
-        </button>
-      </div>
+      {/* Night Breakdown Toggle - Only show for nightly/weekly calculations */}
+      {calculationMethod !== 'equal' && (
+        <div className="breakdown-toggle">
+          <button 
+            onClick={() => setShowBreakdown(!showBreakdown)}
+            className="toggle-button"
+          >
+            {showBreakdown ? 'Hide' : 'Show'} Night-by-Night Breakdown
+          </button>
+        </div>
+      )}
 
       {/* Night-by-Night Breakdown */}
-      {showBreakdown && (
+      {calculationMethod !== 'equal' && showBreakdown && (
         <div className="night-breakdown">
           <h4>Night-by-Night Breakdown</h4>
           <table className="breakdown-table">

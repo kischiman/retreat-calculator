@@ -326,6 +326,7 @@ function App() {
             result={calculationResult}
             showUSD={settings.showUSD}
             roundUSD={settings.roundUSD}
+            calculationMethod={settings.calculationMethod}
             onUpdateSettings={updateSettings}
           />
         )}
